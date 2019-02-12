@@ -41,9 +41,9 @@ team_t team = {
     /* Group name */
     "AA_AmnesiacAnonymous",
     /* First member's full name */
-    "Student Studentsson",
+    "Guðjón Björnsson",
     /* First member's email address */
-    "student16@ru.is",
+    "gudjon17@ru.is",
     /* Second member's full name (leave blank if none) */
     "",
     /* Second member's email address (leave blank if none) */
