@@ -176,6 +176,43 @@ static void *coalesce(void *bp){
 
 }
 
+void mm_heapcheck(int verbose) {
+    
+    char *bp = heap_ptr;
+
+    if (verbose) {
+        printf("Heap (%p):\n", heap_ptr);
+    }
+    if ((GET_SIZE(HDRP(heap_ptr)) != DSIZE) || !GET_ALLOC(HDRP(heap_ptr))) {
+        printf("Bad prologue header\n");
+   // checkblock(heap_ptr);   
+   // need to create such function 
+    }
+    for (bp = heap_ptr; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp)) {
+        if (verbose) {
+            printblock(bp);
+      //  checkblock(bp);
+      //  need to create such function 
+        }
+    }
+     
+    if (verbose) {
+        printblock(bp);
+    }
+    if ((GET_SIZE(HDRP(bp)) != 0) || !(GET_ALLOC(HDRP(bp)))) {
+        printf("Bad epilogue header\n");
+    }
+
+    if(verbose) {
+        printf("Checking for errors in the free list\n");
+    }
+    // checkFreeList();
+    // need to create such function 
+    if(verbose) {
+        printf("Finished checking the free list\n");
+    }
+}
+
 
 /*
  * mm_realloc - Implemented simply in terms of mm_malloc and mm_free
