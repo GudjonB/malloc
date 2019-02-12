@@ -54,7 +54,15 @@ team_t team = {
     ""
 };
 
-/* Checker DEBUG */
+/* Heap checker debug  -  see section 5 in pdf 
+• Is every block in the free list marked as free?
+• Are there any contiguous free blocks that somehow escaped coalescing?
+• Is every free block actually in the free list?
+• Do the pointers in the free list point to valid free blocks?
+• Do any allocated blocks overlap?
+• Do the pointers in a heap block point to valid heap addresses?
+ */
+
 #ifdef DEBUG 
     #define CHECKHEAP(verbose) mm_checkheap(verbose);
 #else 
