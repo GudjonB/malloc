@@ -71,7 +71,7 @@ team_t team = {
 /* rounds up to the nearest multiple of ALIGNMENT */
 #define ALIGN(size) (((size) + (ALIGNMENT-1)) & ~0x7)
 
-/* Pac a size and allocated bit into a word */
+/* Pack a size and allocated bit into a word */
 #define PACK(size, alloc) ((size) | (alloc))
 
 /* Read and write a word at address p */
@@ -100,7 +100,7 @@ static char *heap_ptr;
 int mm_init(void)
 {
     /* Create the initial empty heap */
-    if ((heap_ptr = mem_sbrk(4*WSIZE)) == (void *)-1) {
+    if ((heap_ptr = mem_sbrk(4*WSIZE)) == (void *)-1) { // skoda betur villu
         return -1;
     }
     PUT(heap_ptr, 0);                          /* Alignment padding */
