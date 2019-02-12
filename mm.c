@@ -28,7 +28,7 @@
  *       Format!
  *
  * === User information ===
- * Group: 
+ * Group: Mallakútarnir
  * User 1: gudjon17
  * SSN: 251192-3089
  * User 2: 
@@ -60,7 +60,7 @@ team_t team = {
 #define DSIZE 8
 #define CHUNKSIZE (1<<12)
 
-#define MAX(x, y) ((X) > (Y)? (X) :(Y))
+#define MAX(x, y) ((x) > (y)? (x) :(y))
 /* rounds up to the nearest multiple of ALIGNMENT */
 #define ALIGN(size) (((size) + (ALIGNMENT-1)) & ~0x7)
 
@@ -69,7 +69,7 @@ team_t team = {
 
 /* Read and write a word at address p */
 #define GET(p) (*(unsigned int *)(p))
-#define PUT(p, val) (*(unsigned int *)(P) = (val))
+#define PUT(p, val) (*(unsigned int *)(p) = (val))
 
 /* Read the size and allocated fields from address p */
 #define GET_SIZE(p) (GET(p) & ~0x7)
@@ -85,20 +85,22 @@ team_t team = {
 
 #define SIZE_T_SIZE (ALIGN(sizeof(size_t)))
 
+/* Private globam variables */
+static char *heap_ptr;
 /* 
  * mm_init - initialize the malloc package.
  */
 int mm_init(void)
 {
     /* Create the initial empty heap */
-    if ((heap_listp = mem_sbrk(4*WSIZE)) == (void *)-1) {
+    if ((heap_ptr = mem_sbrk(4*WSIZE)) == (void *)-1) {
         return -1;
     }
-    PUT(heap_listp, 0);                          /* Alignment padding */
-    PUT(heap_listp + (1*WSIZE), PACK(DSIZE, 1)); /* Prologue header */
-    PUT(heap_listp + (2*WSIZE), PACK(DSIZE, 1)); /* Prologue footer */
-    PUT(heap_listp + (3*WSIZE), PACK(0, 1));     /* Epilogue header */
-    heap_listp += (2*WSIZE);
+    PUT(heap_ptr, 0);                          /* Alignment padding */
+    PUT(heap_ptr + (1*WSIZE), PACK(DSIZE, 1)); /* Prologue header */
+    PUT(heap_ptr + (2*WSIZE), PACK(DSIZE, 1)); /* Prologue footer */
+    PUT(heap_ptr + (3*WSIZE), PACK(0, 1));     /* Epilogue header */
+    heap_ptr += (2*WSIZE);
 
     /* Extend the empty heap with a free block of CHUNKSIZE bytes */
     if (extend_heap(CHUNKSIZE/WSIZE) == NULL) {
