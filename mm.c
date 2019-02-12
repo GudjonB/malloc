@@ -190,14 +190,16 @@ void mm_heapcheck(int verbose) {
     }
     for (bp = heap_ptr; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp)) {
         if (verbose) {
-            printblock(bp);
+            // printblock(bp);
+            // need to create such function
       //  checkblock(bp);
       //  need to create such function 
         }
     }
      
     if (verbose) {
-        printblock(bp);
+        // printblock(bp);
+        // need to create such function 
     }
     if ((GET_SIZE(HDRP(bp)) != 0) || !(GET_ALLOC(HDRP(bp)))) {
         printf("Bad epilogue header\n");
