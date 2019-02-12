@@ -71,7 +71,7 @@ team_t team = {
 /* rounds up to the nearest multiple of ALIGNMENT */
 #define ALIGN(size) (((size) + (ALIGNMENT-1)) & ~0x7)
 
-/* Pack a size and allocated bit into a word */
+/* Pac a size and allocated bit into a word */
 #define PACK(size, alloc) ((size) | (alloc))
 
 /* Read and write a word at address p */
@@ -100,7 +100,7 @@ static char *heap_ptr;
 int mm_init(void)
 {
     /* Create the initial empty heap */
-    if ((heap_ptr = mem_sbrk(4*WSIZE)) == (void *)-1) { //hugsnlega hundla betur villuna****
+    if ((heap_ptr = mem_sbrk(4*WSIZE)) == (void *)-1) {
         return -1;
     }
     PUT(heap_ptr, 0);                          /* Alignment padding */
@@ -138,13 +138,99 @@ void *mm_malloc(size_t size)
  */
 void mm_free(void *ptr)
 {
+    size_t size = GET_SIZE(HDRP(bp));
+
+    PUT(HDRP(bp), PACK(size, 0));
+    PUT(FTRP(bp), PACK(size, 0));
+    coalesce(bp);
 }
+
+/*
+coalesce function as in textbook pg. 867
+*/
+
+static void *coalesce(void *bp){
+    size_t prev_alloc = GET_ALLOC(FTRP(PREV_BLKP(bp)));
+    size_t next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(bp)));
+    size_t size = GET_SIZE(HDRP(bp));
+
+    if (prev_alloc && next_alloc) {            /* Case 1 */
+        return bp;
+    }
+
+    else if (prev_alloc && !next_alloc) {      /* Case 2 */
+        size += GET_SIZE(HDRP(NEXT_BLKP(bp)));
+        PUT(HDRP(bp), PACK(size, 0));
+        PUT(FTRP(bp), PACK(size, 0));
+    }
+
+    else if (!prev_alloc && next_alloc) {      /* Case 3 */
+        size += GET_SIZE(HDRP(PREV_BLKP(bp)));
+        PUT(FTRP(bp), PACK(size, 0));
+        PUT(HDRP(PREV_BLKP(bp)), PACK(size, 0));
+        bp = PREV_BLKP(bp);
+    }
+
+    else {                                     /* Case 4 */
+        size += GET_SIZE(HDRP(PREV_BLKP(bp))) + 
+            GET_SIZE(FTRP(NEXT_BLKP(bp)));
+        PUT(HDRP(PREV_BLKP(bp)), PACK(size, 0));
+        PUT(FTRP(NEXT_BLKP(bp)), PACK(size, 0));
+        bp = PREV_BLKP(bp);
+    }
+
+    return bp;
+
+}
+
+void mm_heapcheck(int verbose) {
+    
+    char *bp = heap_ptr;
+
+    if (verbose) {
+        printf("Heap (%p):\n", heap_ptr);
+    }
+    if ((GET_SIZE(HDRP(heap_ptr)) != DSIZE) || !GET_ALLOC(HDRP(heap_ptr))) {
+        printf("Bad prologue header\n");
+   // checkblock(heap_ptr);   
+   // need to create such function 
+    }
+    for (bp = heap_ptr; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp)) {
+        if (verbose) {
+            // printblock(bp);
+            // need to create such function
+      //  checkblock(bp);
+      //  need to create such function 
+        }
+    }
+     
+    if (verbose) {
+        // printblock(bp);
+        // need to create such function 
+    }
+    if ((GET_SIZE(HDRP(bp)) != 0) || !(GET_ALLOC(HDRP(bp)))) {
+        printf("Bad epilogue header\n");
+    }
+
+    if(verbose) {
+        printf("Checking for errors in the free list\n");
+    }
+    // checkFreeList();
+    // need to create such function 
+    if(verbose) {
+        printf("Finished checking the free list\n");
+    }
+}
+
 
 /*
  * mm_realloc - Implemented simply in terms of mm_malloc and mm_free
  */
 void *mm_realloc(void *ptr, size_t size)
 {
+    return NULL;
+    /* %% Geymum í bili -> notum ekkert í fyrstu
+
     void *oldptr = ptr;
     void *newptr;
     size_t copySize;
@@ -160,4 +246,5 @@ void *mm_realloc(void *ptr, size_t size)
     memcpy(newptr, oldptr, copySize);
     mm_free(oldptr);
     return newptr;
+    */
 }
