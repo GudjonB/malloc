@@ -138,6 +138,9 @@ void mm_free(void *ptr)
  */
 void *mm_realloc(void *ptr, size_t size)
 {
+    return NULL;
+    /* %% Geymum í bili -> notum ekkert í fyrstu
+
     void *oldptr = ptr;
     void *newptr;
     size_t copySize;
@@ -153,4 +156,5 @@ void *mm_realloc(void *ptr, size_t size)
     memcpy(newptr, oldptr, copySize);
     mm_free(oldptr);
     return newptr;
+    */
 }
