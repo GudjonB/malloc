@@ -31,8 +31,8 @@
  * Group: 
  * User 1: gudjon17
  * SSN: 251192-3089
- * User 2: 
- * SSN: X
+ * User 2: dagfinnur15
+ * SSN: 130593-2329
  * User 3: 
  * SSN: X
  * === End User Information ===
