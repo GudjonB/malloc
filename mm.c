@@ -54,6 +54,13 @@ team_t team = {
     ""
 };
 
+/* Checker DEBUG */
+#ifdef DEBUG 
+    #define CHECKHEAP(verbose) mm_checkheap(verbose);
+#else 
+    #define CHECKHEAP(verbose);
+#endif 
+
 /* single word (4) or double word (8) alignment */
 #define ALIGNMENT 8
 #define WSIZE 4
