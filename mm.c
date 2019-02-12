@@ -45,9 +45,9 @@ team_t team = {
     /* First member's email address */
     "gudjon17@ru.is",
     /* Second member's full name (leave blank if none) */
-    "",
+    "Dagfinnur Ari Normann",
     /* Second member's email address (leave blank if none) */
-    "",
+    "dagfinnur15@ru.is",
     /* Third full name (leave blank if none) */
     "",
     /* Third member's email address (leave blank if none) */
