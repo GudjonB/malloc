@@ -29,8 +29,8 @@
  *
  * === User information ===
  * Group: 
- * User 1: 
- * SSN: X
+ * User 1: gudjon17
+ * SSN: 251192-3089
  * User 2: 
  * SSN: X
  * User 3: 
