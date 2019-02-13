@@ -1,6 +1,6 @@
 /*
  * mm-naive.c - The fastest, least memory-efficient malloc package.
- * 
+ *
  * In this naive approach, a block is allocated by simply incrementing
  * the brk pointer.  A block is pure payload. There are no headers or
  * footers.  Blocks are never coalesced or reused. Realloc is
@@ -33,7 +33,7 @@
  * SSN: 251192-3089
  * User 2: dagfinnur15
  * SSN: 130593-2329
- * User 3: 
+ * User 3:
  * SSN: X
  * === End User Information ===
  ********************************************************/
@@ -54,7 +54,7 @@ team_t team = {
     ""
 };
 
-/* Heap checker debug  -  see section 5 in pdf 
+/* Heap checker debug  -  see section 5 in pdf
 • Is every block in the free list marked as free?
 • Are there any contiguous free blocks that somehow escaped coalescing?
 • Is every free block actually in the free list?
@@ -62,13 +62,13 @@ team_t team = {
 • Do any allocated blocks overlap?
 • Do the pointers in a heap block point to valid heap addresses?
  */
-
-#ifdef DEBUG 
+/*
+#ifdef DEBUG
     #define CHECKHEAP(verbose) mm_checkheap(verbose);
-#else 
+#else
     #define CHECKHEAP(verbose);
-#endif 
-
+#endif
+*/
 /* single word (4) or double word (8) alignment */
 #define ALIGNMENT 8
 #define WSIZE 4
@@ -102,6 +102,7 @@ team_t team = {
 
 /* Private global variables */
 static char *heap_ptr;
+<<<<<<< HEAD
 static void *extend_heap(size_t words);
 
 /* Node struct, doubly linked list ?? ** þurfum við doubly linked ?*/
@@ -112,6 +113,10 @@ struct node {
 };
 
 /* 
+=======
+static void *coalesce (void *bp);
+/*
+>>>>>>> 245c06885b15b1660377454d5e6b432034326906
  * mm_init - initialize the malloc package.
  */
 int mm_init(void)
@@ -133,12 +138,13 @@ int mm_init(void)
     return 0;
 }
 
-/* 
+/*
  * mm_malloc - Allocate a block by incrementing the brk pointer.
  * Always allocate a block whose size is a multiple of the alignment.
  */
 void *mm_malloc(size_t size)
 {
+    char *bp;
     int newsize = ALIGN(size + SIZE_T_SIZE);
     void *p = mem_sbrk(newsize);
     if (p == (void *)-1) {
@@ -153,8 +159,9 @@ void *mm_malloc(size_t size)
 /*
  * mm_free - Freeing a block does nothing.
  */
-void mm_free(void *ptr)
+void mm_free(void *bp)
 {
+
     size_t size = GET_SIZE(HDRP(bp));
 
     PUT(HDRP(bp), PACK(size, 0));
@@ -189,7 +196,7 @@ static void *coalesce(void *bp){
     }
 
     else {                                     /* Case 4 */
-        size += GET_SIZE(HDRP(PREV_BLKP(bp))) + 
+        size += GET_SIZE(HDRP(PREV_BLKP(bp))) +
             GET_SIZE(FTRP(NEXT_BLKP(bp)));
         PUT(HDRP(PREV_BLKP(bp)), PACK(size, 0));
         PUT(FTRP(NEXT_BLKP(bp)), PACK(size, 0));
@@ -221,7 +228,7 @@ static void *extend_heap(size_t words)
 }
 
 void mm_heapcheck(int verbose) {
-    
+
     char *bp = heap_ptr;
 
     if (verbose) {
@@ -229,21 +236,21 @@ void mm_heapcheck(int verbose) {
     }
     if ((GET_SIZE(HDRP(heap_ptr)) != DSIZE) || !GET_ALLOC(HDRP(heap_ptr))) {
         printf("Bad prologue header\n");
-   // checkblock(heap_ptr);   
-   // need to create such function 
+   // checkblock(heap_ptr);
+   // need to create such function
     }
     for (bp = heap_ptr; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp)) {
         if (verbose) {
             // printblock(bp);
             // need to create such function
       //  checkblock(bp);
-      //  need to create such function 
+      //  need to create such function
         }
     }
-     
+
     if (verbose) {
         // printblock(bp);
-        // need to create such function 
+        // need to create such function
     }
     if ((GET_SIZE(HDRP(bp)) != 0) || !(GET_ALLOC(HDRP(bp)))) {
         printf("Bad epilogue header\n");
@@ -253,7 +260,7 @@ void mm_heapcheck(int verbose) {
         printf("Checking for errors in the free list\n");
     }
     // checkFreeList();
-    // need to create such function 
+    // need to create such function
     if(verbose) {
         printf("Finished checking the free list\n");
     }
@@ -271,7 +278,7 @@ void *mm_realloc(void *ptr, size_t size)
     void *oldptr = ptr;
     void *newptr;
     size_t copySize;
-    
+
     newptr = mm_malloc(size);
     if (newptr == NULL) {
         return NULL;
