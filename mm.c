@@ -100,8 +100,17 @@ team_t team = {
 
 #define SIZE_T_SIZE (ALIGN(sizeof(size_t)))
 
-/* Private globam variables */
+/* Private global variables */
 static char *heap_ptr;
+static void *extend_heap(size_t words);
+
+/* Node struct, doubly linked list ?? ** þurfum við doubly linked ?*/
+struct node *nodePtr; // typedef needed here ? mby not 
+struct node {
+    nodePtr next;
+    nodePtr prev;
+};
+
 /* 
  * mm_init - initialize the malloc package.
  */
@@ -189,6 +198,26 @@ static void *coalesce(void *bp){
 
     return bp;
 
+}
+
+static void *extend_heap(size_t words) 
+{
+    char *bp;
+    size_t size;
+        
+    /* Allocate an even number of words to maintain alignment */
+    size = (words % 2) ? (words+1) * WSIZE : words * WSIZE;
+    if ((bp = (char *)mem_sbrk(size)) == (void *)-1) 
+        return NULL;
+
+    /* Initialize free block header/footer and the epilogue header */
+    PUT(HDRP(bp), PACK(size, 0));         /* free block header */
+    PUT(FTRP(bp), PACK(size, 0));         /* free block footer */
+    PUT(HDRP(NEXT_BLKP(bp)), PACK(0, 1)); /* new epilogue header */
+
+    initializeNode(bp);
+
+    return bp;
 }
 
 void mm_heapcheck(int verbose) {
