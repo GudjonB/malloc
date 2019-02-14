@@ -33,8 +33,8 @@
  * SSN: 251192-3089
  * User 2: dagfinnur15
  * SSN: 130593-2329
- * User 3:
- * SSN: X
+ * User 3: muggur16
+ * SSN: 100596-2029
  * === End User Information ===
  ********************************************************/
 team_t team = {
@@ -49,9 +49,9 @@ team_t team = {
     /* Second member's email address (leave blank if none) */
     "dagfinnur15@ru.is",
     /* Third full name (leave blank if none) */
-    "",
+    "Muggur Ólafsson",
     /* Third member's email address (leave blank if none) */
-    ""
+    "muggur16@ru.is"
 };
 
 /* Heap checker debug  -  see section 5 in pdf
