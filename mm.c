@@ -102,6 +102,8 @@ team_t team = {
 
 /* Private global variables */
 static char *heap_ptr;
+
+/* Private helper functions */
 static void *coalesce (void *bp);
 static void *extend_heap(size_t words);
 
@@ -140,7 +142,6 @@ int mm_init(void)
  */
 void *mm_malloc(size_t size)
 {
-    char *bp;
     int newsize = ALIGN(size + SIZE_T_SIZE);
     void *p = mem_sbrk(newsize);
     if (p == (void *)-1) {
