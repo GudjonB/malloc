@@ -33,8 +33,8 @@
  * SSN: 251192-3089
  * User 2: 
  * SSN: X
- * User 3: 
- * SSN: X
+ * User 3: muggur16
+ * SSN: 100596-2029
  * === End User Information ===
  ********************************************************/
 team_t team = {
