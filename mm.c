@@ -145,7 +145,7 @@ int mm_init(void)
     PUT(heap_listp+DSIZE+WSIZE, PACK(OVERHEAD, 1));  /* prologue header */ 
     PUT(heap_listp+DSIZE+DSIZE, PACK(OVERHEAD, 1));  /* prologue footer */ 
     PUT(heap_listp+DSIZE+DSIZE+WSIZE, PACK(0, 1));   /* epilogue header */
-    heap_listp += DSIZE+DSIZE;
+    heap_listp += (DSIZE+DSIZE);
 
     /* Extend the empty heap with a free block of CHUNKSIZE bytes */
     if (extend_heap(CHUNKSIZE/WSIZE) == NULL) {
@@ -449,7 +449,7 @@ void addToList(void *bp){ //LIFO
     LISTHEAD->next = newNode;
 }
 
-void removeFromList(void *bp){ // LISTHEAD er alltaf fyrsta node blablab
+void removeFromList(void *bp){ // LISTHEAD er alltaf fyrsta node
     listNode nodeToDelete = (listNode)bp;
     if(nodeToDelete->next != NULL ){
         nodeToDelete->next->prev = nodeToDelete->prev;
