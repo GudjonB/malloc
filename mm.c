@@ -276,6 +276,7 @@ static void *extend_heap(size_t words)
     PUT(HDRP(NEXT_BLKP(bp)), PACK(0, 1)); /* new epilogue header */
 
     /* Coalesce if the previous block was free */
+    addToList(bp);
     return coalesce(bp);
 }
 /* $end mmextendheap */
