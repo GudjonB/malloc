@@ -108,7 +108,8 @@ team_t team = {
 /* $end mallocmacros */
 
 /* Global variables */
-static char *heap_listp;  /* pointer to first block */  
+static char *heap_listp;  /* pointer to first block */ 
+static char *mainSearchPointer; 
 
 /* Node for the free node list */
 typedef struct freeNode * listNode;
@@ -141,10 +142,10 @@ int mm_init(void)
     listNode head = ((listNode)(heap_listp+WSIZE));
     head->next = NULL;
     head->prev = NULL;
-    PUT(heap_listp+2*WSIZE, PACK(OVERHEAD, 1));  /* prologue header */ 
-    PUT(heap_listp+DSIZE+WSIZE, PACK(OVERHEAD, 1));  /* prologue footer */ 
-    PUT(heap_listp+DSIZE+DSIZE, PACK(0, 1));   /* epilogue header */
-    heap_listp += DSIZE+WSIZE;
+    PUT(heap_listp+DSIZE+WSIZE, PACK(OVERHEAD, 1));  /* prologue header */ 
+    PUT(heap_listp+DSIZE+DSIZE, PACK(OVERHEAD, 1));  /* prologue footer */ 
+    PUT(heap_listp+DSIZE+DSIZE+WSIZE, PACK(0, 1));   /* epilogue header */
+    heap_listp += DSIZE+DSIZE;
 
     /* Extend the empty heap with a free block of CHUNKSIZE bytes */
     if (extend_heap(CHUNKSIZE/WSIZE) == NULL) {
@@ -326,6 +327,48 @@ static void *find_fit(size_t asize)
     }
     return NULL; /* no fit */
 }
+
+    //Next-fit Search
+static void *Next_fit(size_t chunkSize)
+{
+
+    void *PreviousSearchPointer;
+    PreviousSearchPointer = mainSearchPointer;
+
+    //Start at mainSearchPointer
+    //
+    for( ; 0 < GET_SIZE(HDRP(mainSearchPointer)) ; 
+        mainSearchPointer = NEXT_BLKP(mainSearchPointer))
+    {
+        //Check if the chunk is allocated, and if there is enough space
+        //
+        if(!GET_ALLOC(HDRP(mainSearchPointer)) 
+            && chunkSize <= GET_SIZE(HDRP(mainSearchPointer)))
+        {
+            return mainSearchPointer;
+        }
+    }
+
+    //If no chunk is good enough we gotta start from the beginning
+    //
+    for(mainSearchPointer = LISTHEAD; 
+        mainSearchPointer != PreviousSearchPointer; 
+        mainSearchPointer = NEXT_BLKP(mainSearchPointer))
+    {
+        // Same routine check, checks if the chunk is allocated, and if there is enough space
+        //
+        if(!GET_ALLOC(HDRP(mainSearchPointer)) 
+            && chunkSize <= GET_SIZE(HDRP(mainSearchPointer)))
+        {
+            return mainSearchPointer;
+        }
+    }
+    
+    // Returns a NULL if a fit is not found
+    return NULL; 
+}
+
+
 
 /*
  * coalesce - boundary tag coalescing. Return ptr to coalesced block
