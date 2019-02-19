@@ -346,7 +346,7 @@ static void *find_fit(size_t asize)
 static void *Next_fit(size_t chunkSize)
 {
 
-    listNode *PreviousSearchPointer = mainSearchPointer;
+    listNode *PreviousSearchPointer = *&mainSearchPointer;
 
     //Start at mainSearchPointer
     //
