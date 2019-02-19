@@ -547,7 +547,7 @@ static void freeListChecker() {
 static void* copyToNewBlock(void * oldptr, void * ptr, size_t blockSize, size_t newSize){
     if ((blockSize - newSize) >= (DSIZE + OVERHEAD)) { // asked for same size
             PUT(HDRP(ptr), PACK(newSize, 1));
-            memcpy(ptr, oldptr, copySize);
+            memcpy(ptr, oldptr, newSize);
             PUT(FTRP(ptr), PACK(newSize, 1));
             PUT(HDRP(NEXT_BLKP(ptr)), PACK(blockSize - newSize, 0));
             PUT(FTRP(NEXT_BLKP(ptr)), PACK(blockSize - newSize, 0));
