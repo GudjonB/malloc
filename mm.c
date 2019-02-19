@@ -62,13 +62,13 @@ team_t team = {
 • Do any allocated blocks overlap?
 • Do the pointers in a heap block point to valid heap addresses?
  */
-/*
+
 #ifdef DEBUG
-    #define CHECKHEAP(verbose) mm_checkheap(verbose);
+    #define HEAPCHECK(verbose) mm_checkheap(verbose);
 #else
-    #define CHECKHEAP(verbose);
+    #define HEAPCHECK(verbose);
 #endif
-*/
+
 /* $begin mallocmacros */
 /* single word (4) or double word (8) alignment */
 #define ALIGNMENT 8
@@ -161,6 +161,7 @@ int mm_init(void)
 /* $begin mmmalloc */
 void *mm_malloc(size_t size) 
 {
+    HEAPCHECK(0);
     size_t asize;      /* adjusted block size */
     size_t extendsize; /* amount to extend heap if no fit */
     char *bp;      
@@ -195,6 +196,7 @@ void *mm_malloc(size_t size)
 /* $begin mmfree */
 void mm_free(void *bp)
 {
+    HEAPCHECK(0);
     size_t size = GET_SIZE(HDRP(bp));
 
     PUT(HDRP(bp), PACK(size, 0));
@@ -254,6 +256,13 @@ void mm_checkheap(int verbose)
     }
     if ((GET_SIZE(HDRP(bp)) != 0) || !(GET_ALLOC(HDRP(bp)))) {
         printf("Bad epilogue header\n");
+    }
+    if(verbose) {
+        printf("Checking for errors in the free list\n");
+    }
+    freeListChecker();
+    if(verbose) {
+        printf("All checks of the free list have finished!\n");
     }
 }
 
@@ -457,4 +466,18 @@ void removeFromList(void *bp){ // LISTHEAD er alltaf fyrsta node
     nodeToDelete->prev->next = nodeToDelete->next;
     nodeToDelete->prev = NULL;
     nodeToDelete->next = NULL;
+}
+
+static void freeListChecker() {
+    listNode last = LISTHEAD, tmp;
+    for(tmp = LISTHEAD->next; tmp !=NULL; tmp = tmp->next, last = last->next) {
+        if(!(tmp->prev == last)) {
+            printf("The first block is not correctly pointing to prev pointer of the second block\n");
+            printblock(tmp);
+            printblock(last);
+        }
+        if(GET_ALLOC(HDRP(tmp))) {
+            printf("Allocated an block in free list\n");
+        }
+    }
 }
