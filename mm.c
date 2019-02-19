@@ -237,23 +237,11 @@ void *mm_realloc(void *ptr, size_t size)
     }
     else if (newSize < copySize) {
         return copyToNewBlock(ptr ,ptr, copySize, newSize);
-       /* if ((copySize - newSize) >= (DSIZE + OVERHEAD)) { // asked for same size
-            PUT(HDRP(ptr), PACK(newSize, 1));
-            PUT(FTRP(ptr), PACK(newSize, 1));
-            PUT(HDRP(NEXT_BLKP(ptr)), PACK(copySize - newSize, 0));
-            PUT(FTRP(NEXT_BLKP(ptr)), PACK(copySize - newSize, 0));
-            addToList(NEXT_BLKP(ptr));
-            coalesce(NEXT_BLKP(ptr));
-        }  
-        return ptr; */
     }
     else if (!prev_alloc && next_alloc){
         if((newBlock = (copySize + GET_SIZE(HDRP(PREV_BLKP(ptr))))) >= newSize){
             removeFromList(PREV_BLKP(ptr));
             return copyToNewBlock(ptr, PREV_BLKP(ptr), newBlock, newSize);
-            /*removeFromList(PREV_BLKP(ptr));
-            PUT(HDRP(PREV_BLKP(ptr)), PACK(newSize, 1));
-            PUT(FTRP(PREV_BLKP(ptr)), PACK(newSize, 1));*/
         }
     }
     else if (prev_alloc && !next_alloc){
@@ -285,13 +273,18 @@ void *mm_realloc(void *ptr, size_t size)
         return newp; 
         }
     }
-    else if ((newp = mm_malloc(size)) == NULL) {
-        printf("ERROR: mm_malloc failed in mm_realloc\n");
-        exit(1);
+    else{
+        newp = mm_malloc(size);
+        if(newp == NULL){
+            printf("ERROR: mm_malloc failed in mm_realloc\n");
+            exit(1);
+        }
+        else {
+            memcpy(newp, ptr, size);
+            mm_free(ptr);
+            return newp;
+        }
     }
-    memcpy(newp, ptr, copySize);
-    mm_free(ptr);
-    return newp;
 }
 
 /* 
