@@ -223,8 +223,8 @@ void *mm_realloc(void *ptr, size_t size)
     void *newp;
     size_t copySize;
     size_t newSize = ALIGN(size); // size aligned + overhead
-    size_t prev_alloc = GET_ALLOC(FTRP(PREV_BLKP(ptr)));
-    size_t next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(ptr)));
+    //size_t prev_alloc = GET_ALLOC(FTRP(PREV_BLKP(ptr)));
+    //size_t next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(ptr)));
 
     copySize = GET_SIZE(HDRP(ptr));
     if (newSize == copySize) {
@@ -234,11 +234,9 @@ void *mm_realloc(void *ptr, size_t size)
         if ((copySize - newSize) >= (DSIZE + OVERHEAD)) { // asked for same size
             PUT(HDRP(ptr), PACK(newSize, 1));
             PUT(FTRP(ptr), PACK(newSize, 1));
-
             PUT(HDRP(NEXT_BLKP(ptr)), PACK(copySize - newSize, 0));
             PUT(FTRP(NEXT_BLKP(ptr)), PACK(copySize - newSize, 0));
-            
-            initializeNode(NEXT_BLKP(ptr));
+            addToList(NEXT_BLKP(ptr));
         }
         else { 
             PUT(HDRP(ptr), PACK(copySize, 1));
@@ -250,11 +248,9 @@ void *mm_realloc(void *ptr, size_t size)
         if ((copySize - newSize) >= (DSIZE + OVERHEAD)) { // coalesce then tryagain
             PUT(HDRP(ptr), PACK(newSize, 1));
             PUT(FTRP(ptr), PACK(newSize, 1));
-
             PUT(HDRP(NEXT_BLKP(ptr)), PACK(copySize - newSize, 0));
             PUT(FTRP(NEXT_BLKP(ptr)), PACK(copySize - newSize, 0));
-            
-            initializeNode(NEXT_BLKP(ptr));
+            addToList(NEXT_BLKP(ptr));
         }
         else { 
             PUT(HDRP(ptr), PACK(copySize, 1));
