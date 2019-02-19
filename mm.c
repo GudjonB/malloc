@@ -70,6 +70,12 @@ team_t team = {
 #endif
 */
 /* $begin mallocmacros */
+/* single word (4) or double word (8) alignment */
+#define ALIGNMENT 8
+
+/* rounds up to the nearest multiple of ALIGNMENT */
+#define ALIGN(size) (((size) + OVERHEAD + (ALIGNMENT-1)) & ~0x7)
+
 /* Basic constants and macros */
 #define WSIZE       4       /* word size (bytes) */  
 #define DSIZE       8       /* doubleword size (bytes) */
@@ -85,7 +91,7 @@ team_t team = {
 #define GET(p)         (*(size_t *)(p))
 #define PUT(p, val)    (*(size_t *)(p) = (val))  
 
-/* (which is about 49/100).* Read the size and allocated fields from address p */
+/* Read the size and allocated fields from address p */
 #define GET_SIZE(p)    (GET(p) & ~0x7)
 #define GET_ALLOC(p)   (GET(p) & 0x1)
 
@@ -96,10 +102,20 @@ team_t team = {
 /* Given block ptr bp, compute address of next and previous blocks */
 #define NEXT_BLKP(bp)  ((char *)(bp) + GET_SIZE(((char *)(bp) - WSIZE)))
 #define PREV_BLKP(bp)  ((char *)(bp) - GET_SIZE(((char *)(bp) - DSIZE)))
+
+/* Get head of the free list*/
+#define LISTHEAD ((listNode)(heap_listp-WSIZE-DSIZE))
 /* $end mallocmacros */
 
 /* Global variables */
 static char *heap_listp;  /* pointer to first block */  
+
+/* Node for the free node list */
+typedef struct freeNode * listNode;
+struct freeNode{
+    listNode next;
+    listNode prev;
+};
 
 /* function prototypes for internal helper routines */
 static void *extend_heap(size_t words);
@@ -116,14 +132,17 @@ static void checkblock(void *bp);
 int mm_init(void) 
 {
     /* create the initial empty heap */
-    if ((heap_listp = mem_sbrk(4*WSIZE)) == NULL) {
+    if ((heap_listp = mem_sbrk(6*WSIZE)) == NULL) {
         return -1;
     }
     PUT(heap_listp, 0);                        /* alignment padding */
-    PUT(heap_listp+WSIZE, PACK(OVERHEAD, 1));  /* prologue header */ 
-    PUT(heap_listp+DSIZE, PACK(OVERHEAD, 1));  /* prologue footer */ 
-    PUT(heap_listp+WSIZE+DSIZE, PACK(0, 1));   /* epilogue header */
-    heap_listp += DSIZE;
+    listNode head = ((listNode)(heap_listp+WSIZE));
+    head->next = NULL;
+    head->prev = NULL;
+    PUT(heap_listp+2*WSIZE, PACK(OVERHEAD, 1));  /* prologue header */ 
+    PUT(heap_listp+DSIZE+WSIZE, PACK(OVERHEAD, 1));  /* prologue footer */ 
+    PUT(heap_listp+DSIZE+DSIZE, PACK(0, 1));   /* epilogue header */
+    heap_listp += DSIZE+WSIZE;
 
     /* Extend the empty heap with a free block of CHUNKSIZE bytes */
     if (extend_heap(CHUNKSIZE/WSIZE) == NULL) {
@@ -148,14 +167,9 @@ void *mm_malloc(size_t size)
         return NULL;
     }
 
-    /* Adjust block size to include overhead and alignment reqs. */
-    if (size <= DSIZE) {
-        asize = DSIZE + OVERHEAD;
-    }
-    else {
-        asize = DSIZE * ((size + (OVERHEAD) + (DSIZE-1)) / DSIZE);
-    }
-    
+    /* size + overhead aligned */
+    asize = ALIGN(size);
+
     /* Search the free list for a fit */
     if ((bp = find_fit(asize)) != NULL) {
         place(bp, asize);
@@ -283,6 +297,7 @@ static void place(void *bp, size_t asize)
         bp = NEXT_BLKP(bp);
         PUT(HDRP(bp), PACK(csize-asize, 0));
         PUT(FTRP(bp), PACK(csize-asize, 0));
+        addToList(bp);
     }
     else { 
         PUT(HDRP(bp), PACK(csize, 1));
@@ -297,10 +312,11 @@ static void place(void *bp, size_t asize)
 static void *find_fit(size_t asize)
 {
     /* first fit search */
-    void *bp;
+    listNode bp;
 
-    for (bp = heap_listp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp)) {
+    for (bp = LISTHEAD->next; GET_SIZE(HDRP(bp)) > 0; bp = bp->next) {
         if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp)))) {
+            removeFromList(bp);
             return bp;
         }
     }
@@ -320,17 +336,21 @@ static void *coalesce(void *bp)
         return bp;
     }
     else if (prev_alloc && !next_alloc) {      /* Case 2 */
+        removeFromList(NEXT_BLKP(bp));
         size += GET_SIZE(HDRP(NEXT_BLKP(bp)));
         PUT(HDRP(bp), PACK(size, 0));
         PUT(FTRP(bp), PACK(size,0));
     }
     else if (!prev_alloc && next_alloc) {      /* Case 3 */
+        removeFromList(bp);
         size += GET_SIZE(HDRP(PREV_BLKP(bp)));
         PUT(FTRP(bp), PACK(size, 0));
         PUT(HDRP(PREV_BLKP(bp)), PACK(size, 0));
         bp = PREV_BLKP(bp);
     }
     else {                                     /* Case 4 */
+        removeFromList(NEXT_BLKP(bp));
+        removeFromList(bp);
         size += GET_SIZE(HDRP(PREV_BLKP(bp))) + 
             GET_SIZE(FTRP(NEXT_BLKP(bp)));
         PUT(HDRP(PREV_BLKP(bp)), PACK(size, 0));
@@ -369,4 +389,22 @@ static void checkblock(void *bp)
     if (GET(HDRP(bp)) != GET(FTRP(bp))) {
         printf("Error: header does not match footer\n");
     }
+}
+
+void addToList(void *bp){ //LIFO
+    listNode newNode = (listNode)bp;
+    newNode->next = LISTHEAD->next;
+    newNode->prev = LISTHEAD;
+    if(LISTHEAD->next != NULL){
+        LISTHEAD->next->prev = newNode;
+    }
+    LISTHEAD->next = newNode;
+}
+
+void removeFromList(void *bp){ // LISTHEAD er alltaf fyrsta node blablab
+    listNode nodeToDelete = (listNode)bp;
+    if(nodeToDelete->next != NULL ){
+        nodeToDelete->next->prev = nodeToDelete->prev;
+    }
+    nodeToDelete->prev->next = nodeToDelete->next;
 }
