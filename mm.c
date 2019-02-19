@@ -244,26 +244,16 @@ void *mm_realloc(void *ptr, size_t size)
         }  
         return ptr; 
     }
-    else if (GET_SIZE(HDRP(coalesce(ptr))) >= newSize){
-        if ((copySize - newSize) >= (DSIZE + OVERHEAD)) { // coalesce then tryagain
-            PUT(HDRP(ptr), PACK(newSize, 1));
-            PUT(FTRP(ptr), PACK(newSize, 1));
-            PUT(HDRP(NEXT_BLKP(ptr)), PACK(copySize - newSize, 0));
-            PUT(FTRP(NEXT_BLKP(ptr)), PACK(copySize - newSize, 0));
-            addToList(NEXT_BLKP(ptr));
-        }
-        else { 
-            PUT(HDRP(ptr), PACK(copySize, 1));
-            PUT(FTRP(ptr), PACK(copySize, 1));
-        }  
-        return ptr; 
-    }
     else if ((newp = mm_malloc(size)) == NULL) {
         printf("ERROR: mm_malloc failed in mm_realloc\n");
         exit(1);
     }
-    mm_free(ptr);
+    copySize = GET_SIZE(HDRP(ptr));
+    if (size < copySize) {
+        copySize = size;
+    }
     memcpy(newp, ptr, copySize);
+    mm_free(ptr);
     return newp;
 }
 
