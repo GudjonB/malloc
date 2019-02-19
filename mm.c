@@ -109,7 +109,7 @@ team_t team = {
 
 /* Global variables */
 static char *heap_listp;  /* pointer to first block */ 
-static char *mainSearchPointer; 
+listNode mainSearchPointer; 
 
 /* Node for the free node list */
 typedef struct freeNode * listNode;
@@ -152,6 +152,7 @@ int mm_init(void)
     if (extend_heap(CHUNKSIZE/WSIZE) == NULL) {
         return -1;
     }
+    mainSearchPointer = LISTHEAD->next;
     return 0;
 }
 /* $end mminit */
@@ -329,7 +330,8 @@ static void place(void *bp, size_t asize)
  */
 static void *find_fit(size_t asize)
 {
-    /* first fit search */
+    return Next_fit(asize);
+    /* first fit search 
     listNode bp;
 
     for (bp = LISTHEAD->next; bp != NULL; bp = bp->next) {
@@ -337,7 +339,7 @@ static void *find_fit(size_t asize)
             return bp;
         }
     }
-    return NULL; /* no fit */
+    return NULL;  no fit */
 }
 
     //Next-fit Search
@@ -350,7 +352,7 @@ static void *Next_fit(size_t chunkSize)
     //Start at mainSearchPointer
     //
     for( ; 0 < GET_SIZE(HDRP(mainSearchPointer)) ; 
-        mainSearchPointer = NEXT_BLKP(mainSearchPointer))
+        mainSearchPointer = mainSearchPointer->next)
     {
         //Check if the chunk is allocated, and if there is enough space
         //
@@ -366,7 +368,7 @@ static void *Next_fit(size_t chunkSize)
 
     for(mainSearchPointer = LISTHEAD->next; 
         mainSearchPointer != PreviousSearchPointer; 
-        mainSearchPointer = NEXT_BLKP(mainSearchPointer))
+        mainSearchPointer = mainSearchPointer->next)
     {
         // Same routine check, checks if the chunk is allocated, and if there is enough space
         //
