@@ -346,12 +346,11 @@ static void *find_fit(size_t asize)
 static void *Next_fit(size_t chunkSize)
 {
 
-    listNode *PreviousSearchPointer;
-    PreviousSearchPointer = mainSearchPointer;
+    listNode *PreviousSearchPointer = mainSearchPointer;
 
     //Start at mainSearchPointer
     //
-    for( ; 0 < GET_SIZE(HDRP(mainSearchPointer)) ; 
+    for( ; mainSearchPointer != NULL ; 
         mainSearchPointer = mainSearchPointer->next)
     {
         //Check if the chunk is allocated, and if there is enough space
