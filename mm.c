@@ -297,6 +297,7 @@ static void place(void *bp, size_t asize)
         bp = NEXT_BLKP(bp);
         PUT(HDRP(bp), PACK(csize-asize, 0));
         PUT(FTRP(bp), PACK(csize-asize, 0));
+        addToList(bp);
     }
     else { 
         PUT(HDRP(bp), PACK(csize, 1));
@@ -315,6 +316,7 @@ static void *find_fit(size_t asize)
 
     for (bp = heap_listp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp)) {
         if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp)))) {
+            removeFromList(bp);
             return bp;
         }
     }
@@ -395,7 +397,7 @@ void addToList(void *bp){ //LIFO
     LISTHEAD->next = newNode;
 }
 
-void removeFromList(void *bp){
+void removeFromList(void *bp){ // LISTHEAD er alltaf fyrsta node blablab
     listNode nodeToDelete = (listNode)bp;
     if(nodeToDelete->next != NULL ){
         nodeToDelete->next->prev = nodeToDelete->prev;
