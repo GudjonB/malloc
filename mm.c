@@ -107,16 +107,17 @@ team_t team = {
 #define LISTHEAD ((listNode)(heap_listp-WSIZE-DSIZE))
 /* $end mallocmacros */
 
-/* Global variables */
-static char *heap_listp;  /* pointer to first block */ 
-listNode mainSearchPointer; 
-
 /* Node for the free node list */
 typedef struct freeNode * listNode;
 struct freeNode{
     listNode next;
     listNode prev;
 };
+/* Global variables */
+static char *heap_listp;  /* pointer to first block */ 
+listNode mainSearchPointer; 
+
+
 
 /* function prototypes for internal helper routines */
 void removeFromList(void *bp);
