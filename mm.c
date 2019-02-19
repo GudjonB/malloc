@@ -177,7 +177,7 @@ void *mm_malloc(size_t size)
     asize = ALIGN(size);
 
     /* Search the free list for a fit */
-    if ((bp = find_fit(asize)) != NULL) {
+    if ((bp = Next_fit(asize)) != NULL) {
         place(bp, asize);
         return bp;
     }
@@ -330,8 +330,7 @@ static void place(void *bp, size_t asize)
  */
 static void *find_fit(size_t asize)
 {
-    return Next_fit(asize);
-    /* first fit search 
+    /* first fit search */
     listNode bp;
 
     for (bp = LISTHEAD->next; bp != NULL; bp = bp->next) {
@@ -339,7 +338,7 @@ static void *find_fit(size_t asize)
             return bp;
         }
     }
-    return NULL;  no fit */
+    return NULL; /* no fit */
 }
 
     //Next-fit Search
