@@ -249,6 +249,7 @@ void *mm_realloc(void *ptr, size_t size)
     }
     else if (!prev_alloc && next_alloc){
         if((newBlock = (copySize + GET_SIZE(HDRP(PREV_BLKP(ptr))))) >= newSize){
+            removeFromList(PREV_BLKP(ptr));
             return copyToNewBlock(ptr, PREV_BLKP(ptr), newBlock, newSize);
             /*removeFromList(PREV_BLKP(ptr));
             PUT(HDRP(PREV_BLKP(ptr)), PACK(newSize, 1));
@@ -257,6 +258,7 @@ void *mm_realloc(void *ptr, size_t size)
     }
     else if (prev_alloc && !next_alloc){
         if((newBlock = (copySize + GET_SIZE(FTRP(NEXT_BLKP(ptr))))) >= newSize){
+            removeFromList(NEXT_BLKP(ptr));
             return copyToNewBlock(ptr, NEXT_BLKP(ptr), newBlock, newSize);
         }
     }
