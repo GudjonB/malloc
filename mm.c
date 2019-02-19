@@ -351,6 +351,7 @@ static void *Next_fit(size_t chunkSize)
 
     //If no chunk is good enough we gotta start from the beginning
     //
+
     for(mainSearchPointer = LISTHEAD->next; 
         mainSearchPointer != PreviousSearchPointer; 
         mainSearchPointer = NEXT_BLKP(mainSearchPointer))
