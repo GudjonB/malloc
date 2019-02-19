@@ -215,19 +215,35 @@ void mm_free(void *bp)
  */
 void *mm_realloc(void *ptr, size_t size)
 {
+    if(size == NULL){
+        mm_free(ptr);
+        return ptr; // asked for 0 space, pointer freed
+    }
+
     void *newp;
     size_t copySize;
+    size_t newSize = ALIGN(size); // size aligned + overhead
+    size_t prev_alloc = GET_ALLOC(FTRP(PREV_BLKP(ptr)));
+    size_t next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(ptr)));
 
-    if ((newp = mm_malloc(size)) == NULL) {
+    copySize = GET_SIZE(HDRP(ptr));
+    if (newSize == copySize) {
+        return ptr; 
+    }
+    else if (newSize < copySize) {
+        place(ptr, size); // asked for same size
+        return ptr; 
+    }
+    else if (GET_SIZE(HDRP(coalesce(ptr))) >= newSize){
+        place(ptr, size);
+        return ptr; 
+    }
+    else if ((newp = mm_malloc(size)) == NULL) {
         printf("ERROR: mm_malloc failed in mm_realloc\n");
         exit(1);
     }
-    copySize = GET_SIZE(HDRP(ptr));
-    if (size < copySize) {
-        copySize = size;
-    }
-    memcpy(newp, ptr, copySize);
     mm_free(ptr);
+    memcpy(newp, ptr, copySize);
     return newp;
 }
 
@@ -346,7 +362,7 @@ static void *find_fit(size_t asize)
 static void *Next_fit(size_t chunkSize)
 {
 
-    listNode *PreviousSearchPointer = *&mainSearchPointer;
+    listNode PreviousSearchPointer = &mainSearchPointer;
 
     //Start at mainSearchPointer
     //
