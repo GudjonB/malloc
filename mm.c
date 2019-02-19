@@ -261,7 +261,7 @@ void *mm_realloc(void *ptr, size_t size)
         }
     }
     else if (!prev_alloc && !next_alloc){
-        if((newBlock = (copySize + GET_SIZE(FTRP(NEXT_BLKP(ptr))))) + GET_SIZE(FTRP(PREV_BLKP(ptr)))) >= newSize){
+        if((newBlock = (copySize + GET_SIZE(FTRP(NEXT_BLKP(ptr)))) + GET_SIZE(FTRP(PREV_BLKP(ptr))))) >= newSize){
             newp = PREV_BLKP(ptr);
             if ((newBlock - newSize) >= (DSIZE + OVERHEAD)) { 
                 PUT(HDRP(newp), PACK(newSize, 1));
@@ -278,7 +278,7 @@ void *mm_realloc(void *ptr, size_t size)
                 memcpy(newp, ptr, copySize); // so it isn't over writen
                 PUT(FTRP(newp), PACK(newBlock, 1));
             }
-        return ptr; 
+        return newp; 
         }
     }
     else if ((newp = mm_malloc(size)) == NULL) {
