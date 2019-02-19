@@ -309,16 +309,18 @@ static void place(void *bp, size_t asize)
     if ((csize - asize) >= (DSIZE + OVERHEAD)) { 
         PUT(HDRP(bp), PACK(asize, 1));
         PUT(FTRP(bp), PACK(asize, 1));
-        //bp = NEXT_BLKP(bp);
-        PUT(HDRP(NEXT_BLKP(bp)), PACK(csize-asize, 0));
-        PUT(FTRP(NEXT_BLKP(bp)), PACK(csize-asize, 0));
-        addToList(NEXT_BLKP(bp));
+        removeFromList(bp);
+        bp = NEXT_BLKP(bp);
+        PUT(HDRP(bp), PACK(csize-asize, 0));
+        PUT(FTRP(bp), PACK(csize-asize, 0));
+        addToList(bp);
     }
     else { 
         PUT(HDRP(bp), PACK(csize, 1));
         PUT(FTRP(bp), PACK(csize, 1));
+        removeFromList(bp);
     }
-    removeFromList(bp);
+    
 }
 /* $end mmplace */
 
