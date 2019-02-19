@@ -62,13 +62,13 @@ team_t team = {
 • Do any allocated blocks overlap?
 • Do the pointers in a heap block point to valid heap addresses?
  */
-/*
+
 #ifdef DEBUG
-    #define CHECKHEAP(verbose) mm_checkheap(verbose);
+    #define HEAPCHECK(verbose) mm_checkheap(verbose);
 #else
-    #define CHECKHEAP(verbose);
+    #define HEAPCHECK(verbose);
 #endif
-*/
+
 /* $begin mallocmacros */
 /* single word (4) or double word (8) alignment */
 #define ALIGNMENT 8
@@ -107,20 +107,22 @@ team_t team = {
 #define LISTHEAD ((listNode)(heap_listp-WSIZE-DSIZE))
 /* $end mallocmacros */
 
-/* Global variables */
-static char *heap_listp;  /* pointer to first block */ 
-static char *mainSearchPointer; 
-
 /* Node for the free node list */
 typedef struct freeNode * listNode;
 struct freeNode{
     listNode next;
     listNode prev;
 };
+/* Global variables */
+static char *heap_listp;  /* pointer to first block */ 
+listNode mainSearchPointer; 
+
+
 
 /* function prototypes for internal helper routines */
 void removeFromList(void *bp);
 void addToList(void *bp);
+static void freeListChecker();
 static void *extend_heap(size_t words);
 static void place(void *bp, size_t asize);
 static void *find_fit(size_t asize);
@@ -145,12 +147,13 @@ int mm_init(void)
     PUT(heap_listp+DSIZE+WSIZE, PACK(OVERHEAD, 1));  /* prologue header */ 
     PUT(heap_listp+DSIZE+DSIZE, PACK(OVERHEAD, 1));  /* prologue footer */ 
     PUT(heap_listp+DSIZE+DSIZE+WSIZE, PACK(0, 1));   /* epilogue header */
-    heap_listp += DSIZE+DSIZE;
+    heap_listp += (DSIZE+DSIZE);
 
     /* Extend the empty heap with a free block of CHUNKSIZE bytes */
     if (extend_heap(CHUNKSIZE/WSIZE) == NULL) {
         return -1;
     }
+    mainSearchPointer = LISTHEAD->next;
     return 0;
 }
 /* $end mminit */
@@ -161,6 +164,7 @@ int mm_init(void)
 /* $begin mmmalloc */
 void *mm_malloc(size_t size) 
 {
+    HEAPCHECK(0);
     size_t asize;      /* adjusted block size */
     size_t extendsize; /* amount to extend heap if no fit */
     char *bp;      
@@ -195,6 +199,7 @@ void *mm_malloc(size_t size)
 /* $begin mmfree */
 void mm_free(void *bp)
 {
+    HEAPCHECK(0);
     size_t size = GET_SIZE(HDRP(bp));
 
     PUT(HDRP(bp), PACK(size, 0));
@@ -255,6 +260,13 @@ void mm_checkheap(int verbose)
     if ((GET_SIZE(HDRP(bp)) != 0) || !(GET_ALLOC(HDRP(bp)))) {
         printf("Bad epilogue header\n");
     }
+    if(verbose) {
+        printf("Checking for errors in the free list\n");
+    }
+    freeListChecker();
+    if(verbose) {
+        printf("All checks of the free list have finished!\n");
+    }
 }
 
 /* The remaining routines are internal helper routines */
@@ -299,6 +311,7 @@ static void place(void *bp, size_t asize)
     if ((csize - asize) >= (DSIZE + OVERHEAD)) { 
         PUT(HDRP(bp), PACK(asize, 1));
         PUT(FTRP(bp), PACK(asize, 1));
+        removeFromList(bp);
         bp = NEXT_BLKP(bp);
         PUT(HDRP(bp), PACK(csize-asize, 0));
         PUT(FTRP(bp), PACK(csize-asize, 0));
@@ -307,8 +320,9 @@ static void place(void *bp, size_t asize)
     else { 
         PUT(HDRP(bp), PACK(csize, 1));
         PUT(FTRP(bp), PACK(csize, 1));
+        removeFromList(bp);
     }
-    removeFromList(bp);
+    
 }
 /* $end mmplace */
 
@@ -332,13 +346,12 @@ static void *find_fit(size_t asize)
 static void *Next_fit(size_t chunkSize)
 {
 
-    listNode *PreviousSearchPointer;
-    PreviousSearchPointer = mainSearchPointer;
+    listNode *PreviousSearchPointer = *&mainSearchPointer;
 
     //Start at mainSearchPointer
     //
-    for( ; 0 < GET_SIZE(HDRP(mainSearchPointer)) ; 
-        mainSearchPointer = NEXT_BLKP(mainSearchPointer))
+    for( ; mainSearchPointer != NULL ; 
+        mainSearchPointer = mainSearchPointer->next)
     {
         //Check if the chunk is allocated, and if there is enough space
         //
@@ -354,7 +367,7 @@ static void *Next_fit(size_t chunkSize)
 
     for(mainSearchPointer = LISTHEAD->next; 
         mainSearchPointer != PreviousSearchPointer; 
-        mainSearchPointer = NEXT_BLKP(mainSearchPointer))
+        mainSearchPointer = mainSearchPointer->next)
     {
         // Same routine check, checks if the chunk is allocated, and if there is enough space
         //
@@ -449,7 +462,7 @@ void addToList(void *bp){ //LIFO
     LISTHEAD->next = newNode;
 }
 
-void removeFromList(void *bp){ // LISTHEAD er alltaf fyrsta node blablab
+void removeFromList(void *bp){ // LISTHEAD er alltaf fyrsta node
     listNode nodeToDelete = (listNode)bp;
     if(nodeToDelete->next != NULL ){
         nodeToDelete->next->prev = nodeToDelete->prev;
@@ -457,4 +470,18 @@ void removeFromList(void *bp){ // LISTHEAD er alltaf fyrsta node blablab
     nodeToDelete->prev->next = nodeToDelete->next;
     nodeToDelete->prev = NULL;
     nodeToDelete->next = NULL;
+}
+
+static void freeListChecker() {
+    listNode last = LISTHEAD, tmp;
+    for(tmp = LISTHEAD->next; tmp !=NULL; tmp = tmp->next, last = last->next) {
+        if(!(tmp->prev == last)) {
+            printf("The first block is not correctly pointing to prev pointer of the second block\n");
+            printblock(tmp);
+            printblock(last);
+        }
+        if(GET_ALLOC(HDRP(tmp))) {
+            printf("Allocated an block in free list\n");
+        }
+    }
 }
