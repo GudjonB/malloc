@@ -122,7 +122,7 @@ listNode mainSearchPointer;
 /* function prototypes for internal helper routines */
 void removeFromList(void *bp);
 void addToList(void *bp);
-static void* copyToNewBlock(void * ptr, size_t blockSize, size_t newSize);
+static void* copyToNewBlock(void * oldptr, void * ptr, size_t blockSize, size_t newSize);
 static void freeListChecker();
 static void *extend_heap(size_t words);
 static void place(void *bp, size_t asize);
@@ -236,7 +236,7 @@ void *mm_realloc(void *ptr, size_t size)
         return ptr; 
     }
     else if (newSize < copySize) {
-        return copyToNewBlock(ptr, copySize, newSize);
+        return copyToNewBlock(ptr ,ptr, copySize, newSize);
        /* if ((copySize - newSize) >= (DSIZE + OVERHEAD)) { // asked for same size
             PUT(HDRP(ptr), PACK(newSize, 1));
             PUT(FTRP(ptr), PACK(newSize, 1));
@@ -249,7 +249,7 @@ void *mm_realloc(void *ptr, size_t size)
     }
     else if (!prev_alloc && next_alloc){
         if((newBlock = (copySize + GET_SIZE(HDRP(PREV_BLKP(ptr))))) >= newSize){
-            return copyToNewBlock(PREV_BLKP(ptr), newBlock, newSize);
+            return copyToNewBlock(ptr, PREV_BLKP(ptr), newBlock, newSize);
             /*removeFromList(PREV_BLKP(ptr));
             PUT(HDRP(PREV_BLKP(ptr)), PACK(newSize, 1));
             PUT(FTRP(PREV_BLKP(ptr)), PACK(newSize, 1));*/
@@ -257,7 +257,7 @@ void *mm_realloc(void *ptr, size_t size)
     }
     else if (prev_alloc && !next_alloc){
         if((newBlock = (copySize + GET_SIZE(FTRP(NEXT_BLKP(ptr))))) >= newSize){
-            return copyToNewBlock(NEXT_BLKP(ptr), newBlock, newSize);
+            return copyToNewBlock(ptr, NEXT_BLKP(ptr), newBlock, newSize);
         }
     }
     else if (!prev_alloc && !next_alloc){
@@ -544,9 +544,10 @@ static void freeListChecker() {
         }
     }
 }
-static void* copyToNewBlock(void * ptr, size_t blockSize, size_t newSize){
+static void* copyToNewBlock(void * oldptr, void * ptr, size_t blockSize, size_t newSize){
     if ((blockSize - newSize) >= (DSIZE + OVERHEAD)) { // asked for same size
             PUT(HDRP(ptr), PACK(newSize, 1));
+            memcpy(ptr, oldptr, copySize);
             PUT(FTRP(ptr), PACK(newSize, 1));
             PUT(HDRP(NEXT_BLKP(ptr)), PACK(blockSize - newSize, 0));
             PUT(FTRP(NEXT_BLKP(ptr)), PACK(blockSize - newSize, 0));
