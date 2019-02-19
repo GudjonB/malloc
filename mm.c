@@ -312,9 +312,9 @@ static void place(void *bp, size_t asize)
 static void *find_fit(size_t asize)
 {
     /* first fit search */
-    void *bp;
+    listNode bp;
 
-    for (bp = heap_listp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp)) {
+    for (bp = LISTHEAD->next; GET_SIZE(HDRP(bp)) > 0; bp = bp->next) {
         if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp)))) {
             removeFromList(bp);
             return bp;
