@@ -142,10 +142,10 @@ int mm_init(void)
     listNode head = ((listNode)(heap_listp+WSIZE));
     head->next = NULL;
     head->prev = NULL;
-    PUT(heap_listp+2*WSIZE, PACK(OVERHEAD, 1));  /* prologue header */ 
-    PUT(heap_listp+DSIZE+WSIZE, PACK(OVERHEAD, 1));  /* prologue footer */ 
-    PUT(heap_listp+DSIZE+DSIZE, PACK(0, 1));   /* epilogue header */
-    heap_listp += DSIZE+WSIZE;
+    PUT(heap_listp+DSIZE+WSIZE, PACK(OVERHEAD, 1));  /* prologue header */ 
+    PUT(heap_listp+DSIZE+DSIZE, PACK(OVERHEAD, 1));  /* prologue footer */ 
+    PUT(heap_listp+DSIZE+DSIZE+WSIZE, PACK(0, 1));   /* epilogue header */
+    heap_listp += DSIZE+DSIZE;
 
     /* Extend the empty heap with a free block of CHUNKSIZE bytes */
     if (extend_heap(CHUNKSIZE/WSIZE) == NULL) {
