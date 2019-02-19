@@ -332,7 +332,7 @@ static void *find_fit(size_t asize)
 static void *Next_fit(size_t chunkSize)
 {
 
-    void *PreviousSearchPointer;
+    listNode *PreviousSearchPointer;
     PreviousSearchPointer = mainSearchPointer;
 
     //Start at mainSearchPointer
@@ -455,4 +455,6 @@ void removeFromList(void *bp){ // LISTHEAD er alltaf fyrsta node blablab
         nodeToDelete->next->prev = nodeToDelete->prev;
     }
     nodeToDelete->prev->next = nodeToDelete->next;
+    nodeToDelete->prev = NULL;
+    nodeToDelete->next = NULL;
 }
