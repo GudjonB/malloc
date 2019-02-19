@@ -121,6 +121,7 @@ struct freeNode{
 /* function prototypes for internal helper routines */
 void removeFromList(void *bp);
 void addToList(void *bp);
+static void freeListChecker();
 static void *extend_heap(size_t words);
 static void place(void *bp, size_t asize);
 static void *find_fit(size_t asize);
