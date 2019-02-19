@@ -231,11 +231,35 @@ void *mm_realloc(void *ptr, size_t size)
         return ptr; 
     }
     else if (newSize < copySize) {
-        place(ptr, size); // asked for same size
+        if ((copySize - newSize) >= (DSIZE + OVERHEAD)) { // asked for same size
+            PUT(HDRP(ptr), PACK(newSize, 1));
+            PUT(FTRP(ptr), PACK(newSize, 1));
+
+            PUT(HDRP(NEXT_BLKP(ptr)), PACK(copySize - newSize, 0));
+            PUT(FTRP(NEXT_BLKP(ptr)), PACK(copySize - newSize, 0));
+            
+            initializeNode(NEXT_BLKP(ptr));
+        }
+        else { 
+            PUT(HDRP(ptr), PACK(copySize, 1));
+            PUT(FTRP(ptr), PACK(copySize, 1));
+        }  
         return ptr; 
     }
     else if (GET_SIZE(HDRP(coalesce(ptr))) >= newSize){
-        place(ptr, size);
+        if ((copySize - newSize) >= (DSIZE + OVERHEAD)) { // coalesce then tryagain
+            PUT(HDRP(ptr), PACK(newSize, 1));
+            PUT(FTRP(ptr), PACK(newSize, 1));
+
+            PUT(HDRP(NEXT_BLKP(ptr)), PACK(copySize - newSize, 0));
+            PUT(FTRP(NEXT_BLKP(ptr)), PACK(copySize - newSize, 0));
+            
+            initializeNode(NEXT_BLKP(ptr));
+        }
+        else { 
+            PUT(HDRP(ptr), PACK(copySize, 1));
+            PUT(FTRP(ptr), PACK(copySize, 1));
+        }  
         return ptr; 
     }
     else if ((newp = mm_malloc(size)) == NULL) {
