@@ -317,7 +317,7 @@ static void *find_fit(size_t asize)
     /* first fit search */
     listNode bp;
 
-    for (bp = LISTHEAD->next; bp == NULL; bp = bp->next) {
+    for (bp = LISTHEAD->next; bp != NULL; bp = bp->next) {
         if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp)))) {
             removeFromList(bp);
             return bp;
