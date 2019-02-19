@@ -411,5 +411,3 @@ void removeFromList(void *bp){ // LISTHEAD er alltaf fyrsta node blablab
     }
     nodeToDelete->prev->next = nodeToDelete->next;
 }
-void removeFromList(void *bp);
-void addToList(void *bp);
