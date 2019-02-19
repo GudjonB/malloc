@@ -248,7 +248,7 @@ void *mm_realloc(void *ptr, size_t size)
         return ptr; */
     }
     else if (!prev_alloc && next_alloc){
-        if(newBlock = (copySize + GET_SIZE(HDRP(PREV_BLKP(ptr)))) >= newSize){
+        if((newBlock = (copySize + GET_SIZE(HDRP(PREV_BLKP(ptr))))) >= newSize){
             return copyToNewBlock(PREV_BLKP(ptr), newBlock, newSize);
             /*removeFromList(PREV_BLKP(ptr));
             PUT(HDRP(PREV_BLKP(ptr)), PACK(newSize, 1));
@@ -256,12 +256,12 @@ void *mm_realloc(void *ptr, size_t size)
         }
     }
     else if (prev_alloc && !next_alloc){
-        if(newBlock = (copySize + GET_SIZE(FTRP(NEXT_BLKP(ptr)))) >= newSize){
+        if((newBlock = (copySize + GET_SIZE(FTRP(NEXT_BLKP(ptr))))) >= newSize){
             return copyToNewBlock(NEXT_BLKP(ptr), newBlock, newSize);
         }
     }
     else if (!prev_alloc && !next_alloc){
-        if(newBlock = (copySize + GET_SIZE(FTRP(NEXT_BLKP(ptr))) + GET_SIZE(FTRP(PREV_BLKP(ptr)))) >= newSize){
+        if((newBlock = (copySize + GET_SIZE(FTRP(NEXT_BLKP(ptr))))) + GET_SIZE(FTRP(PREV_BLKP(ptr)))) >= newSize){
             newp = PREV_BLKP(ptr);
             if ((newBlock - newSize) >= (DSIZE + OVERHEAD)) { 
                 PUT(HDRP(newp), PACK(newSize, 1));
@@ -401,7 +401,7 @@ static void *find_fit(size_t asize)
     return NULL; /* no fit */
 }
 
-    //Next-fit Search
+ /*   //Next-fit Search
 static void *Next_fit(size_t chunkSize)
 {
 
@@ -440,7 +440,7 @@ static void *Next_fit(size_t chunkSize)
     // Returns a NULL if a fit is not found
     return NULL; 
 }
-
+*/
 
 
 /*
