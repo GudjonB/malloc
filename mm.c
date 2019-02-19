@@ -261,7 +261,7 @@ void *mm_realloc(void *ptr, size_t size)
         }
     }
     else if (!prev_alloc && !next_alloc){
-        if((newBlock = (copySize + GET_SIZE(FTRP(NEXT_BLKP(ptr)))) + GET_SIZE(FTRP(PREV_BLKP(ptr))))) >= newSize){
+        if(newBlock = (copySize + GET_SIZE(FTRP(NEXT_BLKP(ptr))) + GET_SIZE(FTRP(PREV_BLKP(ptr)))) >= newSize){
             newp = PREV_BLKP(ptr);
             if ((newBlock - newSize) >= (DSIZE + OVERHEAD)) { 
                 PUT(HDRP(newp), PACK(newSize, 1));
