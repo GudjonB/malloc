@@ -308,6 +308,7 @@ static void place(void *bp, size_t asize)
         PUT(HDRP(bp), PACK(csize, 1));
         PUT(FTRP(bp), PACK(csize, 1));
     }
+    removeFromList(bp);
 }
 /* $end mmplace */
 
@@ -321,7 +322,6 @@ static void *find_fit(size_t asize)
 
     for (bp = LISTHEAD->next; bp != NULL; bp = bp->next) {
         if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp)))) {
-            removeFromList(bp);
             return bp;
         }
     }
@@ -351,7 +351,8 @@ static void *Next_fit(size_t chunkSize)
 
     //If no chunk is good enough we gotta start from the beginning
     //
-    for(mainSearchPointer = LISTHEAD; 
+
+    for(mainSearchPointer = LISTHEAD->next; 
         mainSearchPointer != PreviousSearchPointer; 
         mainSearchPointer = NEXT_BLKP(mainSearchPointer))
     {
