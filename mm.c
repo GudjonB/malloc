@@ -232,14 +232,14 @@ void *mm_realloc(void *ptr, size_t size)
         return ptr; 
     }
     else if (newSize < copySize) {
-        // if ((copySize - newSize) >= 2000) { // asked for same size (DSIZE + OVERHEAD)) 
-        //     PUT(HDRP(ptr), PACK(newSize, 1));
-        //     PUT(FTRP(ptr), PACK(newSize, 1));
-        //     PUT(HDRP(NEXT_BLKP(ptr)), PACK(copySize - newSize, 0));
-        //     PUT(FTRP(NEXT_BLKP(ptr)), PACK(copySize - newSize, 0));
-        //     addToList(NEXT_BLKP(ptr));
-        //     coalesce(NEXT_BLKP(ptr));
-        // }
+        if ((copySize - newSize) >= 2000) { // asked for same size (DSIZE + OVERHEAD)) 
+            PUT(HDRP(ptr), PACK(newSize, 1));
+            PUT(FTRP(ptr), PACK(newSize, 1));
+            PUT(HDRP(NEXT_BLKP(ptr)), PACK(copySize - newSize, 0));
+            PUT(FTRP(NEXT_BLKP(ptr)), PACK(copySize - newSize, 0));
+            addToList(NEXT_BLKP(ptr));
+            coalesce(NEXT_BLKP(ptr));
+        }
         return ptr;
     }
     else if (!prev_alloc ){
@@ -403,8 +403,7 @@ static void place(void *bp, size_t asize)
     if ((csize - asize) >= (DSIZE + OVERHEAD)) { 
         PUT(HDRP(bp), PACK(asize, 1));
         PUT(FTRP(bp), PACK(asize, 1));
-        // removeFromList(bp);
-        //bp = NEXT_BLKP(bp);
+        removeFromList(bp);
         PUT(HDRP(NEXT_BLKP(bp)), PACK(csize-asize, 0));
         PUT(FTRP(NEXT_BLKP(bp)), PACK(csize-asize, 0));
 
@@ -413,8 +412,8 @@ static void place(void *bp, size_t asize)
     else { 
         PUT(HDRP(bp), PACK(csize, 1));
         PUT(FTRP(bp), PACK(csize, 1));
+        removeFromList(bp);
     }
-    removeFromList(bp);
     
 }
 /* $end mmplace */
@@ -434,7 +433,7 @@ static void *find_fit(size_t asize)
         if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp))) && (GET_SIZE(HDRP(bp))-asize) < remainder) {
             remainder = GET_SIZE(HDRP(bp)) - asize;
             bestFit = bp;
-            if(remainder  < 5000){
+            if(remainder  < 4000){
                 return bestFit;
             }
         }
@@ -540,7 +539,7 @@ static void freeListChecker() {
             printblock(last);
         }
         if(GET_ALLOC(HDRP(tmp))) {
-            printf("Allocated an block in free list\n");
+            printf("Allocated block in free list!!\n");
         }
     }
 }
