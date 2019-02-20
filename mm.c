@@ -431,10 +431,10 @@ static void *find_fit(size_t asize)
     for (bp = LISTHEAD->next; bp != NULL; bp = bp->next) {
         if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp))) && GET_SIZE(HDRP(bp)) < sizeOfBestFit) {
             sizeOfBestFit = GET_SIZE(HDRP(bp));
-            if((sizeOfBestFit - asize) < 4000){
+            bestFit = bp;
+            if((sizeOfBestFit - asize) < 1000){
                 return bestFit;
             }
-            bestFit = bp;
 
         }
     }
