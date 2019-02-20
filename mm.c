@@ -212,6 +212,12 @@ void mm_free(void *bp)
  */
 void *mm_realloc(void *ptr, size_t size)
 {
+    void *newp;
+    size_t copySize, newBlock;
+    size_t newSize = ALIGN(size); // size aligned + overhead
+    size_t prev_alloc = GET_ALLOC(FTRP(PREV_BLKP(ptr)));
+    size_t next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(ptr)));
+
     if(size == 0){
         mm_free(ptr);
         return NULL; // asked for 0 space, pointer freed
@@ -220,21 +226,14 @@ void *mm_realloc(void *ptr, size_t size)
         ptr = mm_malloc(size);
         return ptr; // asked for new malloc
     }
-
-    void *newp;
-    size_t copySize, newBlock;
-    size_t newSize = ALIGN(size); // size aligned + overhead
-    size_t prev_alloc = GET_ALLOC(FTRP(PREV_BLKP(ptr)));
-    size_t next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(ptr)));
-
     copySize = GET_SIZE(HDRP(ptr));
     if (newSize == copySize) {
         return ptr; 
     }
-    else if (newSize < copySize) {
+    if (newSize < copySize) {
         return ptr;
     }
-    else if (!prev_alloc && next_alloc ){
+    if (!prev_alloc){
         newBlock = (copySize + GET_SIZE(HDRP(PREV_BLKP(ptr))));
         if(newBlock >= newSize){
             removeFromList(PREV_BLKP(ptr));
@@ -245,7 +244,7 @@ void *mm_realloc(void *ptr, size_t size)
             return newp;
         }
     }
-    else if (prev_alloc && !next_alloc){
+    if (!next_alloc){
         newBlock = (copySize + GET_SIZE(FTRP(NEXT_BLKP(ptr))));
         if(newBlock >= newSize){
             removeFromList(NEXT_BLKP(ptr));
@@ -254,7 +253,7 @@ void *mm_realloc(void *ptr, size_t size)
             return ptr;
         }
     }
-    else if (!prev_alloc && !next_alloc){
+    if (!prev_alloc && !next_alloc){
         newBlock = (copySize + GET_SIZE(FTRP(NEXT_BLKP(ptr))) + GET_SIZE(FTRP(PREV_BLKP(ptr))));
         if(newBlock >= newSize){
             newp = PREV_BLKP(ptr);
