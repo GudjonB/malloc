@@ -215,7 +215,7 @@ void mm_free(void *bp)
  */
 void *mm_realloc(void *ptr, size_t size)
 {
-    if(size == NULL){
+    if(size == 0){
         mm_free(ptr);
         return NULL; // asked for 0 space, pointer freed
     }
@@ -322,6 +322,7 @@ void *mm_realloc(void *ptr, size_t size)
             return newp;
         }
     }
+    return NULL; // hopfully we never end up here....
 }
 
 /* 
@@ -425,14 +426,14 @@ static void place(void *bp, size_t asize)
 static void *find_fit(size_t asize)
 {
     /* first fit search */
-    listNode bp, bestFit = NULL;
+    listNode bp = LISTHEAD->next, bestFit = NULL;
     size_t remainder = 9999999; // some huges number
 
-    for (bp = LISTHEAD->next; bp != NULL; bp = bp->next) {
+    for (; bp != NULL; bp = bp->next) {
         if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp))) && (GET_SIZE(HDRP(bp))-asize) < remainder) {
             remainder = GET_SIZE(HDRP(bp)) - asize;
             bestFit = bp;
-            if(remainder  < 2000){
+            if(remainder  < 4000){
                 return bestFit;
             }
 
