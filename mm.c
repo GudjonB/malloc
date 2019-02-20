@@ -574,6 +574,9 @@ void addToList(void *bp){ //LIFO
                 top->next->prev = newNode;
                 top->next = newNode;
             }
+            else {
+                newNode->next = NULL;
+            }
         }
     }
 }
