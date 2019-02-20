@@ -572,7 +572,7 @@ void addToList(void *bp){ //LIFO
         newNode->next = NULL;
     }
     else{
-        for(;(top->next == NULL)||(newNode->size > top->next->size);top = top->next){
+        for(;(top->next != NULL)||(newNode->size > top->next->size);top = top->next){
             newNode->prev = top;
             newNode->next = top->next;
             if(top->next != NULL){
