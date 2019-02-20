@@ -405,10 +405,10 @@ static void place(void *bp, size_t asize)
         PUT(HDRP(bp), PACK(asize, 1));
         PUT(FTRP(bp), PACK(asize, 1));
         removeFromList(bp);
-        bp = NEXT_BLKP(bp);
+        //bp = NEXT_BLKP(bp);
         PUT(HDRP(bp), PACK(csize-asize, 0));
         PUT(FTRP(bp), PACK(csize-asize, 0));
-        addToList(bp);
+        addToList(NEXT_BLKP(bp));
     }
     else { 
         PUT(HDRP(bp), PACK(csize, 1));
