@@ -260,21 +260,9 @@ void *mm_realloc(void *ptr, size_t size)
             newp = PREV_BLKP(ptr);
             removeFromList(newp);
             removeFromList(NEXT_BLKP(ptr));
-            // if ((newBlock - newSize) >= 2000) { //(DSIZE + OVERHEAD))
-            //     PUT(HDRP(newp), PACK(newSize, 1));
-            //     memcpy(newp, ptr, copySize); // so it isn't over writen
-            //     PUT(FTRP(newp), PACK(newSize, 1));
-
-            //     PUT(HDRP(NEXT_BLKP(newp)), PACK(newBlock - newSize, 0)); // new free block
-            //     PUT(FTRP(NEXT_BLKP(newp)), PACK(newBlock - newSize, 0));
-            //     addToList(NEXT_BLKP(newp));
-            //     coalesce(NEXT_BLKP(newp));
-            // }
-            // else { 
-                PUT(HDRP(newp), PACK(newBlock, 1));
-                memcpy(newp, ptr, copySize); // so it isn't over writen
-                PUT(FTRP(newp), PACK(newBlock, 1));
-            // }
+            PUT(HDRP(newp), PACK(newBlock, 1));
+            memcpy(newp, ptr, copySize); // so it isn't over writen
+            PUT(FTRP(newp), PACK(newBlock, 1));
         return newp; 
         }
     }
