@@ -62,9 +62,9 @@ team_t team = {
 • Do any allocated blocks overlap?
 • Do the pointers in a heap block point to valid heap addresses?
  */
-
+/* printf("%s\n, __func__"); */
 #ifdef DEBUG
-    #define HEAPCHECK(verbose) mm_checkheap(verbose);
+    #define HEAPCHECK(verbose) printf("%s\n, __func__"); mm_checkheap(verbose);
 #else
     #define HEAPCHECK(verbose);
 #endif
