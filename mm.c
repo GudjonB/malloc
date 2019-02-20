@@ -593,7 +593,7 @@ void removeFromList(void *bp){ // LISTHEAD er alltaf fyrsta node
     if(nodeToDelete->next != NULL ){
         nodeToDelete->next->prev = nodeToDelete->prev;
     }
-    nodeToDelete->prev->next = nodeToDelete->next;
+    //nodeToDelete->prev->next = nodeToDelete->next;
     nodeToDelete->prev = NULL;
     nodeToDelete->next = NULL;
 }
