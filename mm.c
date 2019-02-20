@@ -425,12 +425,11 @@ static void place(void *bp, size_t asize)
 static void *find_fit(size_t asize)
 {
     /* first fit search */
-    listNode bp, bestFit = NULL;
-    size_t sizeOfBestFit = 9999999; // some huges number
+    listNode bp;
 
     for (bp = LISTHEAD->next; bp != NULL; bp = bp->next) {
         if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp)))) {
-            return bp
+            return bp;
         }
     }
     return NULL; /* no fit */
@@ -439,9 +438,7 @@ static void *find_fit(size_t asize)
  /*   //Next-fit Search
 static void *Next_fit(size_t chunkSize)
 {
-
     listNode PreviousSearchPointer = &mainSearchPointer;
-
     //Start at mainSearchPointer
     //
     for( ; mainSearchPointer != NULL ; 
@@ -455,10 +452,8 @@ static void *Next_fit(size_t chunkSize)
             return mainSearchPointer;
         }
     }
-
     //If no chunk is good enough we gotta start from the beginning
     //
-
     for(mainSearchPointer = LISTHEAD->next; 
         mainSearchPointer != PreviousSearchPointer; 
         mainSearchPointer = mainSearchPointer->next)
