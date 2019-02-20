@@ -249,7 +249,7 @@ void *mm_realloc(void *ptr, size_t size)
         if(newBlock >= newSize){
             removeFromList(PREV_BLKP(ptr));
             newp = PREV_BLKP(ptr);
-            if ((newBlock - newSize) >= 1000) { //(DSIZE + OVERHEAD))
+            if ((newBlock - newSize) >= 2000) { //(DSIZE + OVERHEAD))
                 PUT(HDRP(newp), PACK(newSize, 1));
                 memcpy(newp, ptr, newSize);
                 PUT(FTRP(newp), PACK(newSize, 1));
@@ -430,7 +430,7 @@ static void *find_fit(size_t asize)
     size_t remainder = 9999999; // some huges number
 
     for (; bp != NULL; bp = bp->next) {
-        if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp))) && (GET_SIZE(HDRP(bp))-asize) < 4000) {
+        if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp))) && (GET_SIZE(HDRP(bp))-asize) < 2000) {
             remainder = GET_SIZE(HDRP(bp)) - asize;
             bestFit = bp;
             if(remainder  < 4000){
