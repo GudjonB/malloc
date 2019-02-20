@@ -232,14 +232,14 @@ void *mm_realloc(void *ptr, size_t size)
         return ptr; 
     }
     else if (newSize < copySize) {
-        if ((copySize - newSize) >= 2000) { // asked for same size (DSIZE + OVERHEAD)) 
-            PUT(HDRP(ptr), PACK(newSize, 1));
-            PUT(FTRP(ptr), PACK(newSize, 1));
-            PUT(HDRP(NEXT_BLKP(ptr)), PACK(copySize - newSize, 0));
-            PUT(FTRP(NEXT_BLKP(ptr)), PACK(copySize - newSize, 0));
-            addToList(NEXT_BLKP(ptr));
-            coalesce(NEXT_BLKP(ptr));
-        }
+        // if ((copySize - newSize) >= 2000) { // asked for same size (DSIZE + OVERHEAD)) 
+        //     PUT(HDRP(ptr), PACK(newSize, 1));
+        //     PUT(FTRP(ptr), PACK(newSize, 1));
+        //     PUT(HDRP(NEXT_BLKP(ptr)), PACK(copySize - newSize, 0));
+        //     PUT(FTRP(NEXT_BLKP(ptr)), PACK(copySize - newSize, 0));
+        //     addToList(NEXT_BLKP(ptr));
+        //     coalesce(NEXT_BLKP(ptr));
+        // }
         return ptr;
     }
     else if (!prev_alloc ){
