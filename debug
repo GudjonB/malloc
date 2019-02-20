@@ -1,4 +1,0 @@
-#!/bin/bash
-
-file_list="mm.c mdriver.c clock.c fcyc.c fsecs.c ftimer.c memlib.c"
-clewn -va "$file_list"
