@@ -425,14 +425,16 @@ static void place(void *bp, size_t asize)
 static void *find_fit(size_t asize)
 {
     /* first fit search */
-    listNode bp;
+    listNode bp, bestFit = NULL;
+    size_t sizeOfBestFit = 9999999999; // some huges number
 
     for (bp = LISTHEAD->next; bp != NULL; bp = bp->next) {
-        if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp)))) {
-            return bp;
+        if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp))) && GET_SIZE(HDRP(bp)) < sizeOfBestFit) {
+            sizeOfBestFit = GET_SIZE(HDRP(bp));
+            bestFit = bp;
         }
     }
-    return NULL; /* no fit */
+    return bestFit; /* no fit */
 }
 
  /*   //Next-fit Search
