@@ -373,6 +373,7 @@ static void place(void *bp, size_t asize)
         PUT(FTRP(NEXT_BLKP(bp)), PACK(csize-asize, 0));
 
         addToList(NEXT_BLKP(bp));
+        coalesce(NEXT_BLKP(bp));
     }
     else { 
         PUT(HDRP(bp), PACK(csize, 1));
