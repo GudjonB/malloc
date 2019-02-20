@@ -115,8 +115,6 @@ struct freeNode{
 };
 /* Global variables */
 static char *heap_listp;  /* pointer to first block */ 
-listNode mainSearchPointer; 
-
 
 
 /* function prototypes for internal helper routines */
@@ -153,7 +151,6 @@ int mm_init(void)
     if (extend_heap(CHUNKSIZE/WSIZE) == NULL) {
         return -1;
     }
-    mainSearchPointer = LISTHEAD->next;
     return 0;
 }
 /* $end mminit */
@@ -386,6 +383,7 @@ static void *extend_heap(size_t words)
     PUT(HDRP(NEXT_BLKP(bp)), PACK(0, 1)); /* new epilogue header */
 
     /* Coalesce if the previous block was free */
+    coalesce(bp);
     addToList(bp);
     return bp;
 }
@@ -426,7 +424,8 @@ static void place(void *bp, size_t asize)
 static void *find_fit(size_t asize)
 {
     /* first fit search */
-    listNode bp = LISTHEAD->next, bestFit = NULL;
+    listNode bp = LISTHEAD->next;
+    listNode bestFit = NULL;
     size_t remainder = 9999999; // some huges number
 
     for (; bp != NULL; bp = bp->next) {
@@ -436,7 +435,6 @@ static void *find_fit(size_t asize)
             if(remainder  < 4000){
                 return bestFit;
             }
-
         }
     }
     return bestFit; /* if NULL = no fit */
