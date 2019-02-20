@@ -426,16 +426,8 @@ static void place(void *bp, size_t asize)
  */
 static void *find_fit(size_t asize)
 {
-    /* first fit search */
-    listNode bp;
 
-    for (bp = LISTHEAD->next; bp != NULL; bp = bp->next) {
-        if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp)))) {
-            return bp;
-        }
-    }
-    return NULL; /* no fit */
-    /* best fit search 
+    /* best fit search */
     listNode bp = LISTHEAD->next;
     listNode bestFit = NULL;
     size_t remainder = 9999999; // some huges number
@@ -449,45 +441,8 @@ static void *find_fit(size_t asize)
             }
         }
     }
-    return bestFit; /if NULL = no fit */
+    return bestFit; /*if NULL = no fit */
 }
-
- /*  //Next-fit Search
-static void *Next_fit(size_t chunkSize)
-{
-    listNode PreviousSearchPointer = mainSearchPointer;
-    //Start at mainSearchPointer
-    //
-    for( ; mainSearchPointer != NULL ; 
-        mainSearchPointer = mainSearchPointer->next)
-    {
-        //Check if the chunk is allocated, and if there is enough space
-        //
-        if(!GET_ALLOC(HDRP(mainSearchPointer)) 
-            && chunkSize <= GET_SIZE(HDRP(mainSearchPointer)))
-        {
-            return mainSearchPointer;
-        }
-    }
-    //If no chunk is good enough we gotta start from the beginning
-    //
-    for(mainSearchPointer = LISTHEAD->next; 
-        mainSearchPointer != PreviousSearchPointer; 
-        mainSearchPointer = mainSearchPointer->next)
-    {
-        // Same routine check, checks if the chunk is allocated, and if there is enough space
-        //
-        if(!GET_ALLOC(HDRP(mainSearchPointer)) 
-            && chunkSize <= GET_SIZE(HDRP(mainSearchPointer)))
-        {
-            return mainSearchPointer;
-        }
-    }
-    
-    // Returns a NULL if a fit is not found
-    return NULL; 
-}
-*/
 
 
 /*
@@ -557,30 +512,7 @@ static void checkblock(void *bp)
         printf("Error: header does not match footer\n");
     }
 }
-void addToList(void *bp){ //LIFO
-    listNode newNode = (listNode)bp;
-    size_t size = GET_SIZE(HDRP(bp));
-    listNode top = LISTHEAD->next;
-    if(top == NULL){
-        LISTHEAD->next = newNode;
-        newNode->prev = LISTHEAD;
-        newNode->next = NULL;
-    }
-    else{
-        for(;(top->next != NULL)&&(size > GET_SIZE(HDRP(top->next)));top = top->next){
-            newNode->prev = top;
-            newNode->next = top->next;
-            if(top->next != NULL){
-                top->next->prev = newNode;
-                top->next = newNode;
-            }
-            else {
-                newNode->next = NULL;
-            }
-        }
-    }
-}
-/*
+
 void addToList(void *bp){ //LIFO
     listNode newNode = (listNode)bp;
     newNode->next = LISTHEAD->next;
@@ -589,7 +521,7 @@ void addToList(void *bp){ //LIFO
         LISTHEAD->next->prev = newNode;
     }
     LISTHEAD->next = newNode;
-}*/
+}
 
 void removeFromList(void *bp){ // LISTHEAD er alltaf fyrsta node
     listNode nodeToDelete = (listNode)bp;
