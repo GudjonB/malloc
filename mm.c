@@ -232,7 +232,7 @@ void *mm_realloc(void *ptr, size_t size)
         return ptr; 
     }
     else if (newSize < copySize) {
-        if ((copySize - newSize) >= 2000) { // asked for same size (DSIZE + OVERHEAD)) 
+        if ((copySize - newSize) >= 4000) { // asked for same size (DSIZE + OVERHEAD)) 
             PUT(HDRP(ptr), PACK(newSize, 1));
             PUT(FTRP(ptr), PACK(newSize, 1));
             PUT(HDRP(NEXT_BLKP(ptr)), PACK(copySize - newSize, 0));
@@ -247,7 +247,7 @@ void *mm_realloc(void *ptr, size_t size)
         if(newBlock >= newSize){
             removeFromList(PREV_BLKP(ptr));
             newp = PREV_BLKP(ptr);
-            if ((newBlock - newSize) >= 2000) { //(DSIZE + OVERHEAD))
+            if ((newBlock - newSize) >= 4000) { //(DSIZE + OVERHEAD))
                 PUT(HDRP(newp), PACK(newSize, 1));
                 memcpy(newp, ptr, newSize);
                 PUT(FTRP(newp), PACK(newSize, 1));
@@ -268,7 +268,7 @@ void *mm_realloc(void *ptr, size_t size)
         newBlock = (copySize + GET_SIZE(FTRP(NEXT_BLKP(ptr))));
         if(newBlock >= newSize){
             removeFromList(NEXT_BLKP(ptr));
-            if ((newBlock - newSize) >= 2000) { // asked for same size(DSIZE + OVERHEAD))
+            if ((newBlock - newSize) >= 4000) { // asked for same size(DSIZE + OVERHEAD))
                 PUT(HDRP(ptr), PACK(newSize, 1));
                 PUT(FTRP(ptr), PACK(newSize, 1));
                 PUT(HDRP(NEXT_BLKP(ptr)), PACK(newBlock - newSize, 0));
@@ -289,7 +289,7 @@ void *mm_realloc(void *ptr, size_t size)
             newp = PREV_BLKP(ptr);
             removeFromList(newp);
             removeFromList(NEXT_BLKP(ptr));
-            if ((newBlock - newSize) >= 2000) { //(DSIZE + OVERHEAD))
+            if ((newBlock - newSize) >= 4000) { //(DSIZE + OVERHEAD))
                 PUT(HDRP(newp), PACK(newSize, 1));
                 memcpy(newp, ptr, copySize); // so it isn't over writen
                 PUT(FTRP(newp), PACK(newSize, 1));
