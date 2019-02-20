@@ -115,7 +115,7 @@ struct freeNode{
 };
 /* Global variables */
 static char *heap_listp;  /* pointer to first block */ 
-listNode mainSearchPointer;
+static listNode mainSearchPointer;
 
 /* function prototypes for internal helper routines */
 void removeFromList(void *bp);
