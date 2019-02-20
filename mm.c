@@ -115,14 +115,11 @@ struct freeNode{
 };
 /* Global variables */
 static char *heap_listp;  /* pointer to first block */ 
-listNode mainSearchPointer; 
-
 
 
 /* function prototypes for internal helper routines */
 void removeFromList(void *bp);
 void addToList(void *bp);
-static void* copyToNewBlock(void * oldptr, void * ptr, size_t blockSize, size_t newSize);
 static void freeListChecker();
 static void *extend_heap(size_t words);
 static void place(void *bp, size_t asize);
@@ -154,7 +151,6 @@ int mm_init(void)
     if (extend_heap(CHUNKSIZE/WSIZE) == NULL) {
         return -1;
     }
-    mainSearchPointer = LISTHEAD->next;
     return 0;
 }
 /* $end mminit */
@@ -216,7 +212,7 @@ void mm_free(void *bp)
  */
 void *mm_realloc(void *ptr, size_t size)
 {
-    if(size == NULL){
+    if(size == 0){
         mm_free(ptr);
         return NULL; // asked for 0 space, pointer freed
     }
@@ -236,34 +232,60 @@ void *mm_realloc(void *ptr, size_t size)
         return ptr; 
     }
     else if (newSize < copySize) {
-        return copyToNewBlock(ptr ,ptr, copySize, newSize);
-       /* if ((copySize - newSize) >= (DSIZE + OVERHEAD)) { // asked for same size
+        if ((copySize - newSize) >= (DSIZE + OVERHEAD)) { // asked for same size
             PUT(HDRP(ptr), PACK(newSize, 1));
             PUT(FTRP(ptr), PACK(newSize, 1));
             PUT(HDRP(NEXT_BLKP(ptr)), PACK(copySize - newSize, 0));
             PUT(FTRP(NEXT_BLKP(ptr)), PACK(copySize - newSize, 0));
             addToList(NEXT_BLKP(ptr));
             coalesce(NEXT_BLKP(ptr));
-        }  
-        return ptr; */
+        }
+        return ptr;
     }
     else if (!prev_alloc && next_alloc){
-        if((newBlock = (copySize + GET_SIZE(HDRP(PREV_BLKP(ptr))))) >= newSize){
+        newBlock = (copySize + GET_SIZE(HDRP(PREV_BLKP(ptr))));
+        if(newBlock >= newSize){
             removeFromList(PREV_BLKP(ptr));
-            return copyToNewBlock(ptr, PREV_BLKP(ptr), newBlock, newSize);
-            /*removeFromList(PREV_BLKP(ptr));
-            PUT(HDRP(PREV_BLKP(ptr)), PACK(newSize, 1));
-            PUT(FTRP(PREV_BLKP(ptr)), PACK(newSize, 1));*/
+            newp = PREV_BLKP(ptr);
+            if ((newBlock - newSize) >= (DSIZE + OVERHEAD)) { // asked for same size
+                PUT(HDRP(newp), PACK(newSize, 1));
+                memcpy(newp, ptr, newSize);
+                PUT(FTRP(newp), PACK(newSize, 1));
+                PUT(HDRP(NEXT_BLKP(newp)), PACK(newBlock - newSize, 0));
+                PUT(FTRP(NEXT_BLKP(newp)), PACK(newBlock - newSize, 0));
+                addToList(NEXT_BLKP(newp));
+                coalesce(NEXT_BLKP(newp));
+            }
+            else{
+                PUT(HDRP(newp), PACK(newBlock, 1));
+                memcpy(newp, ptr, newSize);
+                PUT(FTRP(newp), PACK(newBlock, 1));
+            }
+            return newp;
         }
     }
     else if (prev_alloc && !next_alloc){
-        if((newBlock = (copySize + GET_SIZE(FTRP(NEXT_BLKP(ptr))))) >= newSize){
+        newBlock = (copySize + GET_SIZE(FTRP(NEXT_BLKP(ptr))));
+        if(newBlock >= newSize){
             removeFromList(NEXT_BLKP(ptr));
-            return copyToNewBlock(ptr, NEXT_BLKP(ptr), newBlock, newSize);
+            if ((newBlock - newSize) >= (DSIZE + OVERHEAD)) { // asked for same size
+                PUT(HDRP(ptr), PACK(newSize, 1));
+                PUT(FTRP(ptr), PACK(newSize, 1));
+                PUT(HDRP(NEXT_BLKP(ptr)), PACK(newBlock - newSize, 0));
+                PUT(FTRP(NEXT_BLKP(ptr)), PACK(newBlock - newSize, 0));
+                addToList(NEXT_BLKP(ptr));
+                coalesce(NEXT_BLKP(ptr));
+            }
+            else{
+                PUT(HDRP(ptr), PACK(newBlock, 1));
+                PUT(FTRP(ptr), PACK(newBlock, 1));
+            }
+            return ptr;
         }
     }
     else if (!prev_alloc && !next_alloc){
-        if(newBlock = (copySize + GET_SIZE(FTRP(NEXT_BLKP(ptr))) + GET_SIZE(FTRP(PREV_BLKP(ptr)))) >= newSize){
+        newBlock = (copySize + GET_SIZE(FTRP(NEXT_BLKP(ptr))) + GET_SIZE(FTRP(PREV_BLKP(ptr))));
+        if(newBlock >= newSize){
             newp = PREV_BLKP(ptr);
             removeFromList(newp);
             removeFromList(NEXT_BLKP(ptr));
@@ -273,7 +295,7 @@ void *mm_realloc(void *ptr, size_t size)
                 PUT(FTRP(newp), PACK(newSize, 1));
 
                 PUT(HDRP(NEXT_BLKP(newp)), PACK(newBlock - newSize, 0)); // new free block
-                PUT(FTRP(NEXT_BLKP(newp)), PACK(newBlock- newSize, 0));
+                PUT(FTRP(NEXT_BLKP(newp)), PACK(newBlock - newSize, 0));
                 addToList(NEXT_BLKP(newp));
                 coalesce(NEXT_BLKP(newp));
             }
@@ -285,13 +307,19 @@ void *mm_realloc(void *ptr, size_t size)
         return newp; 
         }
     }
-    else if ((newp = mm_malloc(size)) == NULL) {
-        printf("ERROR: mm_malloc failed in mm_realloc\n");
-        exit(1);
+    else{
+        newp = mm_malloc(size);
+        if(newp == NULL){
+            printf("ERROR: mm_malloc failed in mm_realloc\n");
+            exit(1);
+        }
+        else {
+            memcpy(newp, ptr, size);
+            mm_free(ptr);
+            return newp;
+        }
     }
-    memcpy(newp, ptr, copySize);
-    mm_free(ptr);
-    return newp;
+    return NULL; // hopfully we never end up here....
 }
 
 /* 
@@ -395,22 +423,26 @@ static void place(void *bp, size_t asize)
 static void *find_fit(size_t asize)
 {
     /* first fit search */
-    listNode bp;
+    listNode bp = LISTHEAD->next;
+    listNode bestFit = NULL;
+    size_t remainder = 9999999; // some huges number
 
-    for (bp = LISTHEAD->next; bp != NULL; bp = bp->next) {
-        if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp)))) {
-            return bp;
+    for (; bp != NULL; bp = bp->next) {
+        if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp))) && (GET_SIZE(HDRP(bp))-asize) < remainder) {
+            remainder = GET_SIZE(HDRP(bp)) - asize;
+            bestFit = bp;
+            if(remainder  < 4000){
+                return bestFit;
+            }
         }
     }
-    return NULL; /* no fit */
+    return bestFit; /* if NULL = no fit */
 }
 
  /*   //Next-fit Search
 static void *Next_fit(size_t chunkSize)
 {
-
     listNode PreviousSearchPointer = &mainSearchPointer;
-
     //Start at mainSearchPointer
     //
     for( ; mainSearchPointer != NULL ; 
@@ -424,10 +456,8 @@ static void *Next_fit(size_t chunkSize)
             return mainSearchPointer;
         }
     }
-
     //If no chunk is good enough we gotta start from the beginning
     //
-
     for(mainSearchPointer = LISTHEAD->next; 
         mainSearchPointer != PreviousSearchPointer; 
         mainSearchPointer = mainSearchPointer->next)
@@ -547,20 +577,4 @@ static void freeListChecker() {
             printf("Allocated an block in free list\n");
         }
     }
-}
-static void* copyToNewBlock(void * oldptr, void * ptr, size_t blockSize, size_t newSize){
-    if ((blockSize - newSize) >= (DSIZE + OVERHEAD)) { // asked for same size
-            PUT(HDRP(ptr), PACK(newSize, 1));
-            memcpy(ptr, oldptr, newSize);
-            PUT(FTRP(ptr), PACK(newSize, 1));
-            PUT(HDRP(NEXT_BLKP(ptr)), PACK(blockSize - newSize, 0));
-            PUT(FTRP(NEXT_BLKP(ptr)), PACK(blockSize - newSize, 0));
-            addToList(NEXT_BLKP(ptr));
-            coalesce(NEXT_BLKP(ptr));
-        }
-    else { 
-        PUT(HDRP(ptr), PACK(blockSize, 1));
-        PUT(FTRP(ptr), PACK(blockSize, 1));
-    }
-        return ptr; 
 }
