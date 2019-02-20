@@ -112,7 +112,6 @@ typedef struct freeNode * listNode;
 struct freeNode{
     listNode next;
     listNode prev;
-    size_t size;
 };
 /* Global variables */
 static char *heap_listp;  /* pointer to first block */ 
@@ -121,7 +120,7 @@ static char *heap_listp;  /* pointer to first block */
 /* function prototypes for internal helper routines */
 void removeFromList(void *bp);
 void addToList(void *bp);
-// static void *Next_fit(size_t asize);
+static void *Next_fit(size_t asize);
 static void freeListChecker();
 static void *extend_heap(size_t words);
 static void place(void *bp, size_t asize);
@@ -144,7 +143,6 @@ int mm_init(void)
     listNode head = ((listNode)(heap_listp+WSIZE)); // pointer extra 8 bytes 1 DSIZE
     head->next = NULL;
     head->prev = NULL;
-    head->size = 0;
     PUT(heap_listp+DSIZE+WSIZE, PACK(OVERHEAD, 1));  /* prologue header */ 
     PUT(heap_listp+DSIZE+DSIZE, PACK(OVERHEAD, 1));  /* prologue footer */ 
     PUT(heap_listp+DSIZE+DSIZE+WSIZE, PACK(0, 1));   /* epilogue header */
@@ -253,20 +251,20 @@ void *mm_realloc(void *ptr, size_t size)
         if(newBlock >= newSize){
             removeFromList(PREV_BLKP(ptr));
             newp = PREV_BLKP(ptr);
-            //if ((newBlock - newSize) >= 2000) { //(DSIZE + OVERHEAD))
-            //     memcpy(newp, ptr, newSize);
-            //     PUT(HDRP(newp), PACK(newSize, 1));
-            //     PUT(FTRP(newp), PACK(newSize, 1));
-            //     PUT(HDRP(NEXT_BLKP(newp)), PACK(newBlock - newSize, 0));
-            //     PUT(FTRP(NEXT_BLKP(newp)), PACK(newBlock - newSize, 0));
-            //     addToList(NEXT_BLKP(newp));
-            //     coalesce(NEXT_BLKP(newp));
-            // }
-            // else{
+            if ((newBlock - newSize) >= 2000) { //(DSIZE + OVERHEAD))
+                PUT(HDRP(newp), PACK(newSize, 1));
                 memcpy(newp, ptr, newSize);
+                PUT(FTRP(newp), PACK(newSize, 1));
+                PUT(HDRP(NEXT_BLKP(newp)), PACK(newBlock - newSize, 0));
+                PUT(FTRP(NEXT_BLKP(newp)), PACK(newBlock - newSize, 0));
+                addToList(NEXT_BLKP(newp));
+                coalesce(NEXT_BLKP(newp));
+            }
+            else{
                 PUT(HDRP(newp), PACK(newBlock, 1));
+                memcpy(newp, ptr, newSize);
                 PUT(FTRP(newp), PACK(newBlock, 1));
-            //}
+            }
             return newp;
         }
     }
@@ -295,21 +293,21 @@ void *mm_realloc(void *ptr, size_t size)
             newp = PREV_BLKP(ptr);
             removeFromList(newp);
             removeFromList(NEXT_BLKP(ptr));
-            //if ((newBlock - newSize) >= 2000) { //(DSIZE + OVERHEAD))
-            //     memcpy(newp, ptr, copySize); // so it isn't over writen
-            //     PUT(HDRP(newp), PACK(newSize, 1));
-            //     PUT(FTRP(newp), PACK(newSize, 1));
-
-            //     PUT(HDRP(NEXT_BLKP(newp)), PACK(newBlock - newSize, 0)); // new free block
-            //     PUT(FTRP(NEXT_BLKP(newp)), PACK(newBlock - newSize, 0));
-            //     addToList(NEXT_BLKP(newp));
-            //     coalesce(NEXT_BLKP(newp));
-            // }
-            // else { 
+            if ((newBlock - newSize) >= 2000) { //(DSIZE + OVERHEAD))
+                PUT(HDRP(newp), PACK(newSize, 1));
                 memcpy(newp, ptr, copySize); // so it isn't over writen
+                PUT(FTRP(newp), PACK(newSize, 1));
+
+                PUT(HDRP(NEXT_BLKP(newp)), PACK(newBlock - newSize, 0)); // new free block
+                PUT(FTRP(NEXT_BLKP(newp)), PACK(newBlock - newSize, 0));
+                addToList(NEXT_BLKP(newp));
+                coalesce(NEXT_BLKP(newp));
+            }
+            else { 
                 PUT(HDRP(newp), PACK(newBlock, 1));
+                memcpy(newp, ptr, copySize); // so it isn't over writen
                 PUT(FTRP(newp), PACK(newBlock, 1));
-            //}
+            }
         return newp; 
         }
     }
@@ -430,16 +428,6 @@ static void place(void *bp, size_t asize)
 static void *find_fit(size_t asize)
 {
     /* first fit search */
-    listNode bp;
-
-    for (bp = LISTHEAD->next; bp != NULL; bp = bp->next) {
-        if (!GET_ALLOC(HDRP(bp)) && (asize <= bp->size)) {
-            return bp;
-        }
-    }
-    return NULL; /* no fit */
-
-    /* first fit search 
     listNode bp = LISTHEAD->next;
     listNode bestFit = NULL;
     size_t remainder = 9999999; // some huges number
@@ -453,7 +441,7 @@ static void *find_fit(size_t asize)
             }
         }
     }
-    return bestFit;  if NULL = no fit */
+    return bestFit; /* if NULL = no fit */
 }
 
  /*  //Next-fit Search
@@ -564,29 +552,12 @@ static void checkblock(void *bp)
 
 void addToList(void *bp){ //LIFO
     listNode newNode = (listNode)bp;
-    newNode->size = GET_SIZE(HDRP(bp));
-    listNode top = LISTHEAD->next;
-    if(top == NULL){
-        LISTHEAD->next = newNode;
-        newNode->prev = LISTHEAD;
-        newNode->next = NULL;
+    newNode->next = LISTHEAD->next;
+    newNode->prev = LISTHEAD;
+    if(LISTHEAD->next != NULL){
+        LISTHEAD->next->prev = newNode;
     }
-    else{
-        for(;(top->next != NULL)&&(newNode->size > top->next->size);top = top->next){
-            newNode->prev = top;
-            newNode->next = top->next;
-            if(top->next != NULL){
-                top->next->prev = newNode;
-                top->next = newNode;
-            }
-        }
-    }
-    //top->next = newNode;
-    /*newNode->next = LISTHEAD->next;
-        newNode->prev = LISTHEAD;
-        if(LISTHEAD->next != NULL){
-            LISTHEAD->next->prev = newNode;
-        }*/
+    LISTHEAD->next = newNode;
 }
 
 void removeFromList(void *bp){ // LISTHEAD er alltaf fyrsta node
