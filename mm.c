@@ -384,10 +384,6 @@ static void *extend_heap(size_t words)
 
     /* Coalesce if the previous block was free */
     addToList(bp);
-    if(LISTHEAD->next != NULL){
-        coalesce(bp);
-    }
-    
     return bp;
 }
 /* $end mmextendheap */
