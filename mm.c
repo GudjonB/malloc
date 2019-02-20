@@ -384,7 +384,9 @@ static void *extend_heap(size_t words)
 
     /* Coalesce if the previous block was free */
     addToList(bp);
-    coalesce(bp);
+    if(LISTHEAD->next != NULL){
+        coalesce(bp);
+    }
     
     return bp;
 }
@@ -562,9 +564,7 @@ void removeFromList(void *bp){ // LISTHEAD er alltaf fyrsta node
     if(nodeToDelete->next != NULL ){
         nodeToDelete->next->prev = nodeToDelete->prev;
     }
-    if(nodeToDelete->prev != NULL ){
-        nodeToDelete->prev->next = nodeToDelete->next;
-    }
+    nodeToDelete->prev->next = nodeToDelete->next;
     nodeToDelete->prev = NULL;
     nodeToDelete->next = NULL;
 }
