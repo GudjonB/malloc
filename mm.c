@@ -176,14 +176,14 @@ void *mm_malloc(size_t size)
     asize = ALIGN(size);
 
     /* Search the free list for a fit */
-    if ((bp = find_fit(asize)) != NULL) {
+    if ((bp = (char*)find_fit(asize)) != NULL) {
         place(bp, asize);
         return bp;
     }
 
     /* No fit found. Get more memory and place the block */
     extendsize = MAX(asize,CHUNKSIZE);
-    if ((bp = extend_heap(extendsize/WSIZE)) == NULL) {
+    if ((bp = (char*)extend_heap(extendsize/WSIZE)) == NULL) {
         return NULL;
     }
     place(bp, asize);
@@ -408,6 +408,7 @@ static void place(void *bp, size_t asize)
         //bp = NEXT_BLKP(bp);
         PUT(HDRP(NEXT_BLKP(bp)), PACK(csize-asize, 0));
         PUT(FTRP(NEXT_BLKP(bp)), PACK(csize-asize, 0));
+
         addToList(NEXT_BLKP(bp));
     }
     else { 
