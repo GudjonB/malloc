@@ -62,11 +62,11 @@ team_t team = {
 • Do any allocated blocks overlap?
 • Do the pointers in a heap block point to valid heap addresses?
  */
-/* VIRKAR EKKI -?-*/
+/* printf("%s\n, __func__"); */
 #ifdef DEBUG
     #define HEAPCHECK(verbose) printf("%s\n, __func__"); mm_checkheap(verbose);
-#else
-    #define HEAPCHECK(verbose);
+// #else
+//     #define HEAPCHECK(verbose);
 #endif
 
 /* $begin mallocmacros */
@@ -139,7 +139,7 @@ int mm_init(void)
         return -1;
     }
     PUT(heap_listp, 0);                        /* alignment padding */
-    listNode head = ((listNode)(heap_listp+WSIZE));
+    listNode head = ((listNode)(heap_listp+WSIZE)); // pointer extra 8 bytes 1 DSIZE
     head->next = NULL;
     head->prev = NULL;
     PUT(heap_listp+DSIZE+WSIZE, PACK(OVERHEAD, 1));  /* prologue header */ 
@@ -160,9 +160,9 @@ int mm_init(void)
  */
 /* $begin mmmalloc */
 void *mm_malloc(size_t size) 
-{
-    //mm_checkheap(1);      /* Ekki gleyma að kommenta út þegar við skilum */
-    HEAPCHECK(0);
+{   
+    mm_checkheap(1);
+    HEAPCHECK(0);      /* Ekki gleyma að kommenta út þegar við skilum */
     size_t asize;      /* adjusted block size */
     size_t extendsize; /* amount to extend heap if no fit */
     char *bp;      
@@ -197,8 +197,7 @@ void *mm_malloc(size_t size)
 /* $begin mmfree */
 void mm_free(void *bp)
 {       
-   // mm_checkheap(1);      /* Ekki gleyma að kommenta út þegar við skilum */
-    HEAPCHECK(0);
+    HEAPCHECK(0);      /* Ekki gleyma að kommenta út þegar við skilum */
     size_t size = GET_SIZE(HDRP(bp));
 
     PUT(HDRP(bp), PACK(size, 0));
@@ -220,7 +219,7 @@ void *mm_realloc(void *ptr, size_t size)
     }
     if(ptr == NULL){
         ptr = mm_malloc(size);
-        return ptr; // asked for 0 space, pointer freed
+        return ptr; // asked for new malloc
     }
 
     void *newp;
@@ -234,7 +233,7 @@ void *mm_realloc(void *ptr, size_t size)
         return ptr; 
     }
     else if (newSize < copySize) {
-        if ((copySize - newSize) >= 4000) { // asked for same size (DSIZE + OVERHEAD)) 
+        if ((copySize - newSize) >= 2000) { // asked for same size (DSIZE + OVERHEAD)) 
             PUT(HDRP(ptr), PACK(newSize, 1));
             PUT(FTRP(ptr), PACK(newSize, 1));
             PUT(HDRP(NEXT_BLKP(ptr)), PACK(copySize - newSize, 0));
@@ -249,7 +248,7 @@ void *mm_realloc(void *ptr, size_t size)
         if(newBlock >= newSize){
             removeFromList(PREV_BLKP(ptr));
             newp = PREV_BLKP(ptr);
-            if ((newBlock - newSize) >= 4000) { //(DSIZE + OVERHEAD))
+            if ((newBlock - newSize) >= 2000) { //(DSIZE + OVERHEAD))
                 PUT(HDRP(newp), PACK(newSize, 1));
                 memcpy(newp, ptr, newSize);
                 PUT(FTRP(newp), PACK(newSize, 1));
@@ -270,7 +269,7 @@ void *mm_realloc(void *ptr, size_t size)
         newBlock = (copySize + GET_SIZE(FTRP(NEXT_BLKP(ptr))));
         if(newBlock >= newSize){
             removeFromList(NEXT_BLKP(ptr));
-            if ((newBlock - newSize) >= 4000) { // asked for same size(DSIZE + OVERHEAD))
+            if ((newBlock - newSize) >= 2000) { // asked for same size(DSIZE + OVERHEAD))
                 PUT(HDRP(ptr), PACK(newSize, 1));
                 PUT(FTRP(ptr), PACK(newSize, 1));
                 PUT(HDRP(NEXT_BLKP(ptr)), PACK(newBlock - newSize, 0));
@@ -291,7 +290,7 @@ void *mm_realloc(void *ptr, size_t size)
             newp = PREV_BLKP(ptr);
             removeFromList(newp);
             removeFromList(NEXT_BLKP(ptr));
-            if ((newBlock - newSize) >= 4000) { //(DSIZE + OVERHEAD))
+            if ((newBlock - newSize) >= 2000) { //(DSIZE + OVERHEAD))
                 PUT(HDRP(newp), PACK(newSize, 1));
                 memcpy(newp, ptr, copySize); // so it isn't over writen
                 PUT(FTRP(newp), PACK(newSize, 1));
@@ -430,7 +429,7 @@ static void *find_fit(size_t asize)
     size_t remainder = 9999999; // some huges number
 
     for (; bp != NULL; bp = bp->next) {
-        if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp))) && (GET_SIZE(HDRP(bp))-asize) < remainder) {
+        if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp))) && (GET_SIZE(HDRP(bp))-asize) < 4000) {
             remainder = GET_SIZE(HDRP(bp)) - asize;
             bestFit = bp;
             if(remainder  < 4000){
