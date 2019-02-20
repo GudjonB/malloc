@@ -438,7 +438,7 @@ static void *find_fit(size_t asize)
 
         }
     }
-    return NULL; /* no fit */
+    return bestFit; /* if NULL = no fit */
 }
 
  /*   //Next-fit Search
