@@ -62,7 +62,7 @@ team_t team = {
 • Do any allocated blocks overlap?
 • Do the pointers in a heap block point to valid heap addresses?
  */
-/* printf("%s\n, __func__"); */
+/* VIRKAR EKKI -?-*/
 #ifdef DEBUG
     #define HEAPCHECK(verbose) printf("%s\n, __func__"); mm_checkheap(verbose);
 #else
@@ -162,7 +162,8 @@ int mm_init(void)
 /* $begin mmmalloc */
 void *mm_malloc(size_t size) 
 {
-    HEAPCHECK(0);      /* Ekki gleyma að kommenta út þegar við skilum */
+    mm_checkheap(1);      /* Ekki gleyma að kommenta út þegar við skilum */
+   // HEAPCHECK(1);
     size_t asize;      /* adjusted block size */
     size_t extendsize; /* amount to extend heap if no fit */
     char *bp;      
@@ -197,7 +198,8 @@ void *mm_malloc(size_t size)
 /* $begin mmfree */
 void mm_free(void *bp)
 {       
-    HEAPCHECK(0);      /* Ekki gleyma að kommenta út þegar við skilum */
+    mm_checkheap(1);      /* Ekki gleyma að kommenta út þegar við skilum */
+    //HEAPCHECK(1);
     size_t size = GET_SIZE(HDRP(bp));
 
     PUT(HDRP(bp), PACK(size, 0));
@@ -233,7 +235,7 @@ void *mm_realloc(void *ptr, size_t size)
         return ptr; 
     }
     else if (newSize < copySize) {
-        if ((copySize - newSize) >= (DSIZE + OVERHEAD)) { // asked for same size
+        if ((copySize - newSize) >= 4000) { // asked for same size (DSIZE + OVERHEAD)) 
             PUT(HDRP(ptr), PACK(newSize, 1));
             PUT(FTRP(ptr), PACK(newSize, 1));
             PUT(HDRP(NEXT_BLKP(ptr)), PACK(copySize - newSize, 0));
@@ -243,12 +245,12 @@ void *mm_realloc(void *ptr, size_t size)
         }
         return ptr;
     }
-    else if (!prev_alloc && next_alloc){
+    else if (!prev_alloc ){
         newBlock = (copySize + GET_SIZE(HDRP(PREV_BLKP(ptr))));
         if(newBlock >= newSize){
             removeFromList(PREV_BLKP(ptr));
             newp = PREV_BLKP(ptr);
-            if ((newBlock - newSize) >= (DSIZE + OVERHEAD)) { // asked for same size
+            if ((newBlock - newSize) >= 4000) { //(DSIZE + OVERHEAD))
                 PUT(HDRP(newp), PACK(newSize, 1));
                 memcpy(newp, ptr, newSize);
                 PUT(FTRP(newp), PACK(newSize, 1));
@@ -265,11 +267,11 @@ void *mm_realloc(void *ptr, size_t size)
             return newp;
         }
     }
-    else if (prev_alloc && !next_alloc){
+    else if (!next_alloc){
         newBlock = (copySize + GET_SIZE(FTRP(NEXT_BLKP(ptr))));
         if(newBlock >= newSize){
             removeFromList(NEXT_BLKP(ptr));
-            if ((newBlock - newSize) >= (DSIZE + OVERHEAD)) { // asked for same size
+            if ((newBlock - newSize) >= 4000) { // asked for same size(DSIZE + OVERHEAD))
                 PUT(HDRP(ptr), PACK(newSize, 1));
                 PUT(FTRP(ptr), PACK(newSize, 1));
                 PUT(HDRP(NEXT_BLKP(ptr)), PACK(newBlock - newSize, 0));
@@ -290,7 +292,7 @@ void *mm_realloc(void *ptr, size_t size)
             newp = PREV_BLKP(ptr);
             removeFromList(newp);
             removeFromList(NEXT_BLKP(ptr));
-            if ((newBlock - newSize) >= (DSIZE + OVERHEAD)) { 
+            if ((newBlock - newSize) >= 4000) { //(DSIZE + OVERHEAD))
                 PUT(HDRP(newp), PACK(newSize, 1));
                 memcpy(newp, ptr, copySize); // so it isn't over writen
                 PUT(FTRP(newp), PACK(newSize, 1));
