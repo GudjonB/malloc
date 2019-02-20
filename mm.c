@@ -152,6 +152,7 @@ int mm_init(void)
     if (extend_heap(CHUNKSIZE/WSIZE) == NULL) {
         return -1;
     }
+    mainSearchPointer = LISTHEAD->next;
     return 0;
 }
 /* $end mminit */
