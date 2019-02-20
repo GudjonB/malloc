@@ -62,11 +62,11 @@ team_t team = {
 • Do any allocated blocks overlap?
 • Do the pointers in a heap block point to valid heap addresses?
  */
-
+/* printf("%s\n, __func__"); */
 #ifdef DEBUG
-    #define HEAPCHECK(verbose) mm_checkheap(verbose);
+    #define CHECKHEAP(verbose) printf("%s\n, __func__"); mm_checkheap(verbose);
 #else
-    #define HEAPCHECK(verbose);
+    #define CHECKHEAP(verbose);
 #endif
 
 /* $begin mallocmacros */
@@ -115,8 +115,6 @@ struct freeNode{
 };
 /* Global variables */
 static char *heap_listp;  /* pointer to first block */ 
-listNode mainSearchPointer; 
-
 
 
 /* function prototypes for internal helper routines */
@@ -141,7 +139,7 @@ int mm_init(void)
         return -1;
     }
     PUT(heap_listp, 0);                        /* alignment padding */
-    listNode head = ((listNode)(heap_listp+WSIZE));
+    listNode head = ((listNode)(heap_listp+WSIZE)); // pointer extra 8 bytes 1 DSIZE
     head->next = NULL;
     head->prev = NULL;
     PUT(heap_listp+DSIZE+WSIZE, PACK(OVERHEAD, 1));  /* prologue header */ 
@@ -153,7 +151,6 @@ int mm_init(void)
     if (extend_heap(CHUNKSIZE/WSIZE) == NULL) {
         return -1;
     }
-    mainSearchPointer = LISTHEAD->next;
     return 0;
 }
 /* $end mminit */
@@ -163,8 +160,9 @@ int mm_init(void)
  */
 /* $begin mmmalloc */
 void *mm_malloc(size_t size) 
-{
-    HEAPCHECK(0);
+{   
+    //mm_checkheap(1);
+    CHECKHEAP(0);      /* Ekki gleyma að kommenta út þegar við skilum */
     size_t asize;      /* adjusted block size */
     size_t extendsize; /* amount to extend heap if no fit */
     char *bp;      
@@ -178,14 +176,14 @@ void *mm_malloc(size_t size)
     asize = ALIGN(size);
 
     /* Search the free list for a fit */
-    if ((bp = find_fit(asize)) != NULL) {
+    if ((bp = (char*)find_fit(asize)) != NULL) {
         place(bp, asize);
         return bp;
     }
 
     /* No fit found. Get more memory and place the block */
     extendsize = MAX(asize,CHUNKSIZE);
-    if ((bp = extend_heap(extendsize/WSIZE)) == NULL) {
+    if ((bp = (char*)extend_heap(extendsize/WSIZE)) == NULL) {
         return NULL;
     }
     place(bp, asize);
@@ -198,8 +196,9 @@ void *mm_malloc(size_t size)
  */
 /* $begin mmfree */
 void mm_free(void *bp)
-{
-    HEAPCHECK(0);
+{   
+    //mm_checkheap(1);    
+    CHECKHEAP(0);      /* Ekki gleyma að kommenta út þegar við skilum */
     size_t size = GET_SIZE(HDRP(bp));
 
     PUT(HDRP(bp), PACK(size, 0));
@@ -215,20 +214,114 @@ void mm_free(void *bp)
  */
 void *mm_realloc(void *ptr, size_t size)
 {
-    void *newp;
-    size_t copySize;
+    if(size == 0){
+        mm_free(ptr);
+        return NULL; // asked for 0 space, pointer freed
+    }
+    if(ptr == NULL){
+        ptr = mm_malloc(size);
+        return ptr; // asked for new malloc
+    }
 
-    if ((newp = mm_malloc(size)) == NULL) {
-        printf("ERROR: mm_malloc failed in mm_realloc\n");
-        exit(1);
-    }
+    void *newp;
+    size_t copySize, newBlock;
+    size_t newSize = ALIGN(size); // size aligned + overhead
+    size_t prev_alloc = GET_ALLOC(FTRP(PREV_BLKP(ptr)));
+    size_t next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(ptr)));
+
     copySize = GET_SIZE(HDRP(ptr));
-    if (size < copySize) {
-        copySize = size;
+    if (newSize == copySize) {
+        return ptr; 
     }
-    memcpy(newp, ptr, copySize);
-    mm_free(ptr);
-    return newp;
+    else if (newSize < copySize) {
+        if ((copySize - newSize) >= 2000) { // asked for same size (DSIZE + OVERHEAD)) 
+            PUT(HDRP(ptr), PACK(newSize, 1));
+            PUT(FTRP(ptr), PACK(newSize, 1));
+            PUT(HDRP(NEXT_BLKP(ptr)), PACK(copySize - newSize, 0));
+            PUT(FTRP(NEXT_BLKP(ptr)), PACK(copySize - newSize, 0));
+            addToList(NEXT_BLKP(ptr));
+            coalesce(NEXT_BLKP(ptr));
+        }
+        return ptr;
+    }
+    else if (!prev_alloc ){
+        newBlock = (copySize + GET_SIZE(HDRP(PREV_BLKP(ptr))));
+        if(newBlock >= newSize){
+            removeFromList(PREV_BLKP(ptr));
+            newp = PREV_BLKP(ptr);
+            if ((newBlock - newSize) >= 2000) { //(DSIZE + OVERHEAD))
+                PUT(HDRP(newp), PACK(newSize, 1));
+                memcpy(newp, ptr, newSize);
+                PUT(FTRP(newp), PACK(newSize, 1));
+                PUT(HDRP(NEXT_BLKP(newp)), PACK(newBlock - newSize, 0));
+                PUT(FTRP(NEXT_BLKP(newp)), PACK(newBlock - newSize, 0));
+                addToList(NEXT_BLKP(newp));
+                coalesce(NEXT_BLKP(newp));
+            }
+            else{
+                PUT(HDRP(newp), PACK(newBlock, 1));
+                memcpy(newp, ptr, newSize);
+                PUT(FTRP(newp), PACK(newBlock, 1));
+            }
+            return newp;
+        }
+    }
+    else if (!next_alloc){
+        newBlock = (copySize + GET_SIZE(FTRP(NEXT_BLKP(ptr))));
+        if(newBlock >= newSize){
+            removeFromList(NEXT_BLKP(ptr));
+            if ((newBlock - newSize) >= 2000) { // asked for same size(DSIZE + OVERHEAD))
+                PUT(HDRP(ptr), PACK(newSize, 1));
+                PUT(FTRP(ptr), PACK(newSize, 1));
+                PUT(HDRP(NEXT_BLKP(ptr)), PACK(newBlock - newSize, 0));
+                PUT(FTRP(NEXT_BLKP(ptr)), PACK(newBlock - newSize, 0));
+                addToList(NEXT_BLKP(ptr));
+                coalesce(NEXT_BLKP(ptr));
+            }
+            else{
+                PUT(HDRP(ptr), PACK(newBlock, 1));
+                PUT(FTRP(ptr), PACK(newBlock, 1));
+            }
+            return ptr;
+        }
+    }
+    else if (!prev_alloc && !next_alloc){
+        newBlock = (copySize + GET_SIZE(FTRP(NEXT_BLKP(ptr))) + GET_SIZE(FTRP(PREV_BLKP(ptr))));
+        if(newBlock >= newSize){
+            newp = PREV_BLKP(ptr);
+            removeFromList(newp);
+            removeFromList(NEXT_BLKP(ptr));
+            if ((newBlock - newSize) >= 2000) { //(DSIZE + OVERHEAD))
+                PUT(HDRP(newp), PACK(newSize, 1));
+                memcpy(newp, ptr, copySize); // so it isn't over writen
+                PUT(FTRP(newp), PACK(newSize, 1));
+
+                PUT(HDRP(NEXT_BLKP(newp)), PACK(newBlock - newSize, 0)); // new free block
+                PUT(FTRP(NEXT_BLKP(newp)), PACK(newBlock - newSize, 0));
+                addToList(NEXT_BLKP(newp));
+                coalesce(NEXT_BLKP(newp));
+            }
+            else { 
+                PUT(HDRP(newp), PACK(newBlock, 1));
+                memcpy(newp, ptr, copySize); // so it isn't over writen
+                PUT(FTRP(newp), PACK(newBlock, 1));
+            }
+        return newp; 
+        }
+    }
+    else{
+        newp = mm_malloc(size);
+        if(newp == NULL){
+            printf("ERROR: mm_malloc failed in mm_realloc\n");
+            exit(1);
+        }
+        else {
+            memcpy(newp, ptr, size);
+            mm_free(ptr);
+            return newp;
+        }
+    }
+    return NULL; // hopfully we never end up here....
 }
 
 /* 
@@ -311,17 +404,18 @@ static void place(void *bp, size_t asize)
     if ((csize - asize) >= (DSIZE + OVERHEAD)) { 
         PUT(HDRP(bp), PACK(asize, 1));
         PUT(FTRP(bp), PACK(asize, 1));
-        removeFromList(bp);
-        bp = NEXT_BLKP(bp);
-        PUT(HDRP(bp), PACK(csize-asize, 0));
-        PUT(FTRP(bp), PACK(csize-asize, 0));
-        addToList(bp);
+        // removeFromList(bp);
+        //bp = NEXT_BLKP(bp);
+        PUT(HDRP(NEXT_BLKP(bp)), PACK(csize-asize, 0));
+        PUT(FTRP(NEXT_BLKP(bp)), PACK(csize-asize, 0));
+
+        addToList(NEXT_BLKP(bp));
     }
     else { 
         PUT(HDRP(bp), PACK(csize, 1));
         PUT(FTRP(bp), PACK(csize, 1));
-        removeFromList(bp);
     }
+    removeFromList(bp);
     
 }
 /* $end mmplace */
@@ -332,22 +426,26 @@ static void place(void *bp, size_t asize)
 static void *find_fit(size_t asize)
 {
     /* first fit search */
-    listNode bp;
+    listNode bp = LISTHEAD->next;
+    listNode bestFit = NULL;
+    size_t remainder = 9999999; // some huges number
 
-    for (bp = LISTHEAD->next; bp != NULL; bp = bp->next) {
-        if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp)))) {
-            return bp;
+    for (; bp != NULL; bp = bp->next) {
+        if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp))) && (GET_SIZE(HDRP(bp))-asize) < remainder) {
+            remainder = GET_SIZE(HDRP(bp)) - asize;
+            bestFit = bp;
+            if(remainder  < 4000){
+                return bestFit;
+            }
         }
     }
-    return NULL; /* no fit */
+    return bestFit; /* if NULL = no fit */
 }
 
-    //Next-fit Search
+ /*   //Next-fit Search
 static void *Next_fit(size_t chunkSize)
 {
-
-    listNode *PreviousSearchPointer = *&mainSearchPointer;
-
+    listNode PreviousSearchPointer = &mainSearchPointer;
     //Start at mainSearchPointer
     //
     for( ; mainSearchPointer != NULL ; 
@@ -361,10 +459,8 @@ static void *Next_fit(size_t chunkSize)
             return mainSearchPointer;
         }
     }
-
     //If no chunk is good enough we gotta start from the beginning
     //
-
     for(mainSearchPointer = LISTHEAD->next; 
         mainSearchPointer != PreviousSearchPointer; 
         mainSearchPointer = mainSearchPointer->next)
@@ -381,7 +477,7 @@ static void *Next_fit(size_t chunkSize)
     // Returns a NULL if a fit is not found
     return NULL; 
 }
-
+*/
 
 
 /*
