@@ -510,7 +510,7 @@ void removeFromList(void *bp){ // LISTHEAD er alltaf fyrsta node
 
 static void freeListChecker() {
     listNode last = LISTHEAD, tmp;
-    for(tmp = LISTHEAD->next; tmp !=NULL; tmp = tmp->next, last = last->next) {
+    for(tmp = LISTHEAD; tmp !=NULL; tmp = tmp->next, last = last->next) {
         if(!(tmp->prev == last)) {
             printf("The first block is not correctly pointing to prev pointer of the second block\n");
             printblock(tmp);
