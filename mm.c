@@ -232,40 +232,20 @@ void *mm_realloc(void *ptr, size_t size)
         return ptr; 
     }
     else if (newSize < copySize) {
-        // if ((copySize - newSize) >= 2000) { // asked for same size (DSIZE + OVERHEAD)) 
-        //     PUT(HDRP(ptr), PACK(newSize, 1));
-        //     PUT(FTRP(ptr), PACK(newSize, 1));
-        //     PUT(HDRP(NEXT_BLKP(ptr)), PACK(copySize - newSize, 0));
-        //     PUT(FTRP(NEXT_BLKP(ptr)), PACK(copySize - newSize, 0));
-        //     addToList(NEXT_BLKP(ptr));
-        //     coalesce(NEXT_BLKP(ptr));
-        // }
         return ptr;
     }
-    else if (!prev_alloc ){
+    else if (!prev_alloc && next_alloc ){
         newBlock = (copySize + GET_SIZE(HDRP(PREV_BLKP(ptr))));
         if(newBlock >= newSize){
             removeFromList(PREV_BLKP(ptr));
             newp = PREV_BLKP(ptr);
-            // if ((newBlock - newSize) >= 2000) { //(DSIZE + OVERHEAD))
-            //     PUT(HDRP(newp), PACK(newSize, 1));
-            //     memcpy(newp, ptr, newSize);
-            //     ptr = NULL;
-            //     PUT(FTRP(newp), PACK(newSize, 1));
-            //     PUT(HDRP(NEXT_BLKP(newp)), PACK(newBlock - newSize, 0));
-            //     PUT(FTRP(NEXT_BLKP(newp)), PACK(newBlock - newSize, 0));
-            //     addToList(NEXT_BLKP(newp));
-            //     coalesce(NEXT_BLKP(newp));
-            // }
-            // else{
                 PUT(HDRP(newp), PACK(newBlock, 1));
                 memcpy(newp, ptr, newSize);
                 PUT(FTRP(newp), PACK(newBlock, 1));
-            // }
             return newp;
         }
     }
-    else if (!next_alloc){
+    else if (prev_alloc && !next_alloc){
         newBlock = (copySize + GET_SIZE(FTRP(NEXT_BLKP(ptr))));
         if(newBlock >= newSize){
             removeFromList(NEXT_BLKP(ptr));
