@@ -212,12 +212,6 @@ void mm_free(void *bp)
  */
 void *mm_realloc(void *ptr, size_t size)
 {
-    void *newp;
-    size_t copySize, newBlock;
-    size_t newSize = ALIGN(size); // size aligned + overhead
-    size_t prev_alloc = GET_ALLOC(FTRP(PREV_BLKP(ptr)));
-    size_t next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(ptr)));
-
     if(size == 0){
         mm_free(ptr);
         return NULL; // asked for 0 space, pointer freed
@@ -226,14 +220,21 @@ void *mm_realloc(void *ptr, size_t size)
         ptr = mm_malloc(size);
         return ptr; // asked for new malloc
     }
+
+    void *newp;
+    size_t copySize, newBlock;
+    size_t newSize = ALIGN(size); // size aligned + overhead
+    size_t prev_alloc = GET_ALLOC(FTRP(PREV_BLKP(ptr)));
+    size_t next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(ptr)));
+
     copySize = GET_SIZE(HDRP(ptr));
     if (newSize == copySize) {
         return ptr; 
     }
-    if (newSize < copySize) {
+    else if (newSize < copySize) {
         return ptr;
     }
-    if (!prev_alloc){
+    else if (!prev_alloc){
         newBlock = (copySize + GET_SIZE(HDRP(PREV_BLKP(ptr))));
         if(newBlock >= newSize){
             removeFromList(PREV_BLKP(ptr));
@@ -244,7 +245,7 @@ void *mm_realloc(void *ptr, size_t size)
             return newp;
         }
     }
-    if (!next_alloc){
+    else if (!next_alloc){
         newBlock = (copySize + GET_SIZE(FTRP(NEXT_BLKP(ptr))));
         if(newBlock >= newSize){
             removeFromList(NEXT_BLKP(ptr));
@@ -253,7 +254,7 @@ void *mm_realloc(void *ptr, size_t size)
             return ptr;
         }
     }
-    if (!prev_alloc && !next_alloc){
+    else if (!prev_alloc && !next_alloc){
         newBlock = (copySize + GET_SIZE(FTRP(NEXT_BLKP(ptr))) + GET_SIZE(FTRP(PREV_BLKP(ptr))));
         if(newBlock >= newSize){
             newp = PREV_BLKP(ptr);
@@ -380,8 +381,17 @@ static void place(void *bp, size_t asize)
  */
 static void *find_fit(size_t asize)
 {
+    /* first fit search */
+    listNode bp;
 
-    /* best fit search */
+    for (bp = LISTHEAD->next; GET_SIZE(HDRP(bp)) > 0; bp = bp->next) {
+        if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp)))) {
+            return bp;
+        }
+    }
+    return NULL; /* no fit */
+
+    /* best fit search 
     listNode bp = LISTHEAD->next;
     listNode bestFit = NULL;
     size_t remainder = 9999999; // some huges number
@@ -395,7 +405,7 @@ static void *find_fit(size_t asize)
             }
         }
     }
-    return bestFit; /*if NULL = no fit */
+    return bestFit; if NULL = no fit */
 }
 
 
