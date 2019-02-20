@@ -401,9 +401,9 @@ static void *find_fit(size_t asize)
         if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp))) && (GET_SIZE(HDRP(bp))-asize) < remainder) {
             remainder = GET_SIZE(HDRP(bp)) - asize; // the remainder of the block that was not asked for
             bestFit = bp;
-            if(remainder  <= 3600){ // when the remainder of the block is less then 3600 bits the block is considered goodenough
-                return bestFit;   // the number 3600 is a multiple of 8 and was found through trial and error
-            }
+            // if(remainder  <= 3600){ // when the remainder of the block is less then 3600 bits the block is considered goodenough
+            //     return bestFit;   // the number 3600 is a multiple of 8 and was found through trial and error
+            // }
         }
     }
     return bestFit; /*if still NULL = no fit */ // if we got to this point then either a block with a higher remainder is used, or a block was not found :(
