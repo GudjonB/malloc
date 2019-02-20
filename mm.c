@@ -112,6 +112,7 @@ typedef struct freeNode * listNode;
 struct freeNode{
     listNode next;
     listNode prev;
+    size_t size;
 };
 /* Global variables */
 static char *heap_listp;  /* pointer to first block */ 
@@ -143,6 +144,7 @@ int mm_init(void)
     listNode head = ((listNode)(heap_listp+WSIZE)); // pointer extra 8 bytes 1 DSIZE
     head->next = NULL;
     head->prev = NULL;
+    head->size = 0;
     PUT(heap_listp+DSIZE+WSIZE, PACK(OVERHEAD, 1));  /* prologue header */ 
     PUT(heap_listp+DSIZE+DSIZE, PACK(OVERHEAD, 1));  /* prologue footer */ 
     PUT(heap_listp+DSIZE+DSIZE+WSIZE, PACK(0, 1));   /* epilogue header */
@@ -436,7 +438,7 @@ static void *find_fit(size_t asize)
         if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp))) && (GET_SIZE(HDRP(bp))-asize) < remainder) {
             remainder = GET_SIZE(HDRP(bp)) - asize;
             bestFit = bp;
-            if(remainder  < 2000){
+            if(remainder  < 4000){
                 return bestFit;
             }
         }
@@ -552,12 +554,29 @@ static void checkblock(void *bp)
 
 void addToList(void *bp){ //LIFO
     listNode newNode = (listNode)bp;
-    newNode->next = LISTHEAD->next;
-    newNode->prev = LISTHEAD;
-    if(LISTHEAD->next != NULL){
-        LISTHEAD->next->prev = newNode;
+    newNode->size = GET_SIZE(HDRP(bp));
+    listNode top = LISTHEAD->next;
+    if(top == NULL){
+        LISTHEAD->next = newNode;
+        newNode->prev = LISTHEAD;
+        newNode->next = NULL;
     }
-    LISTHEAD->next = newNode;
+    else{
+        for(;(top->next == NULL)||(newNode->size > top->next->size);top = top->next){
+            newNode->prev = top;
+            newNode->next = top->next;
+            if(top->next != NULL){
+                top->next->prev = newNode;
+                top->next = newNode;
+            }
+        }
+    }
+    //top->next = newNode;
+    /*newNode->next = LISTHEAD->next;
+        newNode->prev = LISTHEAD;
+        if(LISTHEAD->next != NULL){
+            LISTHEAD->next->prev = newNode;
+        }*/
 }
 
 void removeFromList(void *bp){ // LISTHEAD er alltaf fyrsta node
