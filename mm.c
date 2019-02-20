@@ -120,7 +120,7 @@ static char *heap_listp;  /* pointer to first block */
 /* function prototypes for internal helper routines */
 void removeFromList(void *bp);
 void addToList(void *bp);
-static void *Next_fit(size_t asize);
+// static void *Next_fit(size_t asize);
 static void freeListChecker();
 static void *extend_heap(size_t words);
 static void place(void *bp, size_t asize);
@@ -252,8 +252,8 @@ void *mm_realloc(void *ptr, size_t size)
             removeFromList(PREV_BLKP(ptr));
             newp = PREV_BLKP(ptr);
             if ((newBlock - newSize) >= 2000) { //(DSIZE + OVERHEAD))
-                PUT(HDRP(newp), PACK(newSize, 1));
                 memcpy(newp, ptr, newSize);
+                PUT(HDRP(newp), PACK(newSize, 1));
                 PUT(FTRP(newp), PACK(newSize, 1));
                 PUT(HDRP(NEXT_BLKP(newp)), PACK(newBlock - newSize, 0));
                 PUT(FTRP(NEXT_BLKP(newp)), PACK(newBlock - newSize, 0));
@@ -261,8 +261,8 @@ void *mm_realloc(void *ptr, size_t size)
                 coalesce(NEXT_BLKP(newp));
             }
             else{
-                PUT(HDRP(newp), PACK(newBlock, 1));
                 memcpy(newp, ptr, newSize);
+                PUT(HDRP(newp), PACK(newBlock, 1));
                 PUT(FTRP(newp), PACK(newBlock, 1));
             }
             return newp;
