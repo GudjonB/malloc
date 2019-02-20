@@ -62,9 +62,9 @@ team_t team = {
 • Do any allocated blocks overlap?
 • Do the pointers in a heap block point to valid heap addresses?
  */
-
+/* printf("%s\n, __func__"); */
 #ifdef DEBUG
-    #define HEAPCHECK(verbose) mm_checkheap(verbose);
+    #define HEAPCHECK(verbose) printf("%s\n, __func__"); mm_checkheap(verbose);
 #else
     #define HEAPCHECK(verbose);
 #endif
@@ -115,9 +115,7 @@ struct freeNode{
 };
 /* Global variables */
 static char *heap_listp;  /* pointer to first block */ 
-listNode mainSearchPointer; 
-
-
+listNode mainSearchPointer;
 
 /* function prototypes for internal helper routines */
 void removeFromList(void *bp);
@@ -154,7 +152,6 @@ int mm_init(void)
     if (extend_heap(CHUNKSIZE/WSIZE) == NULL) {
         return -1;
     }
-    mainSearchPointer = LISTHEAD->next;
     return 0;
 }
 /* $end mminit */
@@ -165,7 +162,7 @@ int mm_init(void)
 /* $begin mmmalloc */
 void *mm_malloc(size_t size) 
 {
-    HEAPCHECK(0);
+    HEAPCHECK(0);      /* Ekki gleyma að kommenta út þegar við skilum */
     size_t asize;      /* adjusted block size */
     size_t extendsize; /* amount to extend heap if no fit */
     char *bp;      
@@ -199,8 +196,8 @@ void *mm_malloc(size_t size)
  */
 /* $begin mmfree */
 void mm_free(void *bp)
-{
-    HEAPCHECK(0);
+{       
+    HEAPCHECK(0);      /* Ekki gleyma að kommenta út þegar við skilum */
     size_t size = GET_SIZE(HDRP(bp));
 
     PUT(HDRP(bp), PACK(size, 0));
@@ -216,7 +213,7 @@ void mm_free(void *bp)
  */
 void *mm_realloc(void *ptr, size_t size)
 {
-    if(size == NULL){
+    if(size == 0){
         mm_free(ptr);
         return NULL; // asked for 0 space, pointer freed
     }
@@ -323,6 +320,7 @@ void *mm_realloc(void *ptr, size_t size)
             return newp;
         }
     }
+    return NULL; // hopfully we never end up here....
 }
 
 /* 
@@ -426,22 +424,26 @@ static void place(void *bp, size_t asize)
 static void *find_fit(size_t asize)
 {
     /* first fit search */
-    listNode bp;
+    listNode bp = LISTHEAD->next;
+    listNode bestFit = NULL;
+    size_t remainder = 9999999; // some huges number
 
-    for (bp = LISTHEAD->next; bp != NULL; bp = bp->next) {
-        if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp)))) {
-            return bp;
+    for (; bp != NULL; bp = bp->next) {
+        if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp))) && (GET_SIZE(HDRP(bp))-asize) < remainder) {
+            remainder = GET_SIZE(HDRP(bp)) - asize;
+            bestFit = bp;
+            if(remainder  < 4000){
+                return bestFit;
+            }
         }
     }
-    return NULL; /* no fit */
+    return bestFit; /* if NULL = no fit */
 }
 
     //Next-fit Search
 static void *Next_fit(size_t chunkSize)
 {
-
     listNode PreviousSearchPointer = mainSearchPointer;
- 
     //Start at mainSearchPointer
     //
     for( ; mainSearchPointer != NULL ; 
@@ -455,10 +457,8 @@ static void *Next_fit(size_t chunkSize)
             return mainSearchPointer;
         }
     }
-
     //If no chunk is good enough we gotta start from the beginning
     //
-
     for(mainSearchPointer = LISTHEAD->next; 
         mainSearchPointer != PreviousSearchPointer; 
         mainSearchPointer = mainSearchPointer->next)
