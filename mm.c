@@ -162,7 +162,7 @@ int mm_init(void)
 void *mm_malloc(size_t size) 
 {   
     mm_checkheap(1);
-    HEAPCHECK(0);      /* Ekki gleyma að kommenta út þegar við skilum */
+    //HEAPCHECK(0);      /* Ekki gleyma að kommenta út þegar við skilum */
     size_t asize;      /* adjusted block size */
     size_t extendsize; /* amount to extend heap if no fit */
     char *bp;      
@@ -197,7 +197,7 @@ void *mm_malloc(size_t size)
 /* $begin mmfree */
 void mm_free(void *bp)
 {       
-    HEAPCHECK(0);      /* Ekki gleyma að kommenta út þegar við skilum */
+    //HEAPCHECK(0);      /* Ekki gleyma að kommenta út þegar við skilum */
     size_t size = GET_SIZE(HDRP(bp));
 
     PUT(HDRP(bp), PACK(size, 0));
