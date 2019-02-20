@@ -429,16 +429,11 @@ static void *find_fit(size_t asize)
     size_t sizeOfBestFit = 9999999; // some huges number
 
     for (bp = LISTHEAD->next; bp != NULL; bp = bp->next) {
-        if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp))) && GET_SIZE(HDRP(bp)) < sizeOfBestFit) {
-            sizeOfBestFit = GET_SIZE(HDRP(bp));
-            if(sizeOfBestFit < 500){
-                return bestFit;
-            }
-            bestFit = bp;
-
+        if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp)))) {
+            return bp
         }
     }
-    return bestFit; /* no fit */
+    return NULL; /* no fit */
 }
 
  /*   //Next-fit Search
