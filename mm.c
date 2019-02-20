@@ -436,7 +436,7 @@ static void *find_fit(size_t asize)
         if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp))) && (GET_SIZE(HDRP(bp))-asize) < remainder) {
             remainder = GET_SIZE(HDRP(bp)) - asize;
             bestFit = bp;
-            if(remainder  < 4000){
+            if(remainder  < 2000){
                 return bestFit;
             }
         }
