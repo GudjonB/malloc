@@ -115,7 +115,7 @@ struct freeNode{
 };
 /* Global variables */
 static char *heap_listp;  /* pointer to first block */ 
-
+listNode mainSearchPointer;
 
 /* function prototypes for internal helper routines */
 void removeFromList(void *bp);
@@ -176,14 +176,14 @@ void *mm_malloc(size_t size)
     asize = ALIGN(size);
 
     /* Search the free list for a fit */
-    if ((bp = (char*)find_fit(asize)) != NULL) {
+    if ((bp = Next_fit(asize)) != NULL) {
         place(bp, asize);
         return bp;
     }
 
     /* No fit found. Get more memory and place the block */
     extendsize = MAX(asize,CHUNKSIZE);
-    if ((bp = (char*)extend_heap(extendsize/WSIZE)) == NULL) {
+    if ((bp = extend_heap(extendsize/WSIZE)) == NULL) {
         return NULL;
     }
     place(bp, asize);
@@ -442,10 +442,10 @@ static void *find_fit(size_t asize)
     return bestFit; /* if NULL = no fit */
 }
 
- /*   //Next-fit Search
+   //Next-fit Search
 static void *Next_fit(size_t chunkSize)
 {
-    listNode PreviousSearchPointer = &mainSearchPointer;
+    listNode PreviousSearchPointer = mainSearchPointer;
     //Start at mainSearchPointer
     //
     for( ; mainSearchPointer != NULL ; 
@@ -477,7 +477,7 @@ static void *Next_fit(size_t chunkSize)
     // Returns a NULL if a fit is not found
     return NULL; 
 }
-*/
+
 
 
 /*
