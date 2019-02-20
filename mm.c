@@ -490,7 +490,6 @@ void addToList(void *bp){ //LIFO
         LISTHEAD->next->prev = newNode;
     }
     LISTHEAD->next = newNode;
-    coalesce(bp);
 }
 /* 
  *this function removes the node that bp points to and connects the neighbor nodes to each other 
