@@ -216,20 +216,113 @@ void mm_free(void *bp)
  */
 void *mm_realloc(void *ptr, size_t size)
 {
-    void *newp;
-    size_t copySize;
+    if(size == NULL){
+        mm_free(ptr);
+        return NULL; // asked for 0 space, pointer freed
+    }
+    if(ptr == NULL){
+        ptr = mm_malloc(size);
+        return ptr; // asked for 0 space, pointer freed
+    }
 
-    if ((newp = mm_malloc(size)) == NULL) {
-        printf("ERROR: mm_malloc failed in mm_realloc\n");
-        exit(1);
-    }
+    void *newp;
+    size_t copySize, newBlock;
+    size_t newSize = ALIGN(size); // size aligned + overhead
+    size_t prev_alloc = GET_ALLOC(FTRP(PREV_BLKP(ptr)));
+    size_t next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(ptr)));
+
     copySize = GET_SIZE(HDRP(ptr));
-    if (size < copySize) {
-        copySize = size;
+    if (newSize == copySize) {
+        return ptr; 
     }
-    memcpy(newp, ptr, copySize);
-    mm_free(ptr);
-    return newp;
+    else if (newSize < copySize) {
+        if ((copySize - newSize) >= (DSIZE + OVERHEAD)) { // asked for same size
+            PUT(HDRP(ptr), PACK(newSize, 1));
+            PUT(FTRP(ptr), PACK(newSize, 1));
+            PUT(HDRP(NEXT_BLKP(ptr)), PACK(copySize - newSize, 0));
+            PUT(FTRP(NEXT_BLKP(ptr)), PACK(copySize - newSize, 0));
+            addToList(NEXT_BLKP(ptr));
+            coalesce(NEXT_BLKP(ptr));
+        }
+        return ptr;
+    }
+    else if (!prev_alloc && next_alloc){
+        newBlock = (copySize + GET_SIZE(HDRP(PREV_BLKP(ptr))));
+        if(newBlock >= newSize){
+            removeFromList(PREV_BLKP(ptr));
+            newp = PREV_BLKP(ptr);
+            if ((newBlock - newSize) >= (DSIZE + OVERHEAD)) { // asked for same size
+                PUT(HDRP(newp), PACK(newSize, 1));
+                memcpy(newp, ptr, newSize);
+                PUT(FTRP(newp), PACK(newSize, 1));
+                PUT(HDRP(NEXT_BLKP(newp)), PACK(newBlock - newSize, 0));
+                PUT(FTRP(NEXT_BLKP(newp)), PACK(newBlock - newSize, 0));
+                addToList(NEXT_BLKP(newp));
+                coalesce(NEXT_BLKP(newp));
+            }
+            else{
+                PUT(HDRP(newp), PACK(newBlock, 1));
+                memcpy(newp, ptr, newSize);
+                PUT(FTRP(newp), PACK(newBlock, 1));
+            }
+            return newp;
+        }
+    }
+    else if (prev_alloc && !next_alloc){
+        newBlock = (copySize + GET_SIZE(FTRP(NEXT_BLKP(ptr))));
+        if(newBlock >= newSize){
+            removeFromList(NEXT_BLKP(ptr));
+            if ((newBlock - newSize) >= (DSIZE + OVERHEAD)) { // asked for same size
+                PUT(HDRP(ptr), PACK(newSize, 1));
+                PUT(FTRP(ptr), PACK(newSize, 1));
+                PUT(HDRP(NEXT_BLKP(ptr)), PACK(newBlock - newSize, 0));
+                PUT(FTRP(NEXT_BLKP(ptr)), PACK(newBlock - newSize, 0));
+                addToList(NEXT_BLKP(ptr));
+                coalesce(NEXT_BLKP(ptr));
+            }
+            else{
+                PUT(HDRP(ptr), PACK(newBlock, 1));
+                PUT(FTRP(ptr), PACK(newBlock, 1));
+            }
+            return ptr;
+        }
+    }
+    else if (!prev_alloc && !next_alloc){
+        newBlock = (copySize + GET_SIZE(FTRP(NEXT_BLKP(ptr))) + GET_SIZE(FTRP(PREV_BLKP(ptr))));
+        if(newBlock >= newSize){
+            newp = PREV_BLKP(ptr);
+            removeFromList(newp);
+            removeFromList(NEXT_BLKP(ptr));
+            if ((newBlock - newSize) >= (DSIZE + OVERHEAD)) { 
+                PUT(HDRP(newp), PACK(newSize, 1));
+                memcpy(newp, ptr, copySize); // so it isn't over writen
+                PUT(FTRP(newp), PACK(newSize, 1));
+
+                PUT(HDRP(NEXT_BLKP(newp)), PACK(newBlock - newSize, 0)); // new free block
+                PUT(FTRP(NEXT_BLKP(newp)), PACK(newBlock - newSize, 0));
+                addToList(NEXT_BLKP(newp));
+                coalesce(NEXT_BLKP(newp));
+            }
+            else { 
+                PUT(HDRP(newp), PACK(newBlock, 1));
+                memcpy(newp, ptr, copySize); // so it isn't over writen
+                PUT(FTRP(newp), PACK(newBlock, 1));
+            }
+        return newp; 
+        }
+    }
+    else{
+        newp = mm_malloc(size);
+        if(newp == NULL){
+            printf("ERROR: mm_malloc failed in mm_realloc\n");
+            exit(1);
+        }
+        else {
+            memcpy(newp, ptr, size);
+            mm_free(ptr);
+            return newp;
+        }
+    }
 }
 
 /* 
@@ -343,11 +436,11 @@ static void *find_fit(size_t asize)
     return NULL; /* no fit */
 }
 
-    //Next-fit Search
+ /*   //Next-fit Search
 static void *Next_fit(size_t chunkSize)
 {
 
-    listNode *PreviousSearchPointer = *&mainSearchPointer;
+    listNode PreviousSearchPointer = &mainSearchPointer;
 
     //Start at mainSearchPointer
     //
@@ -382,7 +475,7 @@ static void *Next_fit(size_t chunkSize)
     // Returns a NULL if a fit is not found
     return NULL; 
 }
-
+*/
 
 
 /*
