@@ -429,7 +429,7 @@ static void *find_fit(size_t asize)
     size_t remainder = 9999999; // some huges number
 
     for (; bp != NULL; bp = bp->next) {
-        if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp))) && (GET_SIZE(HDRP(bp))-asize) < 2000) {
+        if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp))) && (GET_SIZE(HDRP(bp))-asize) < remainder) {
             remainder = GET_SIZE(HDRP(bp)) - asize;
             bestFit = bp;
             if(remainder  < 4000){
