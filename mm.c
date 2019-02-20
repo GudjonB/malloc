@@ -236,51 +236,51 @@ void *mm_realloc(void *ptr, size_t size)
     if (newSize == copySize) { // asked to allocate the same amount of space
         return ptr; 
     }
-    else if (newSize < copySize) { // at first we implamented this to behave sortof like the function place, but after many tries this gave us the best score
-        return ptr;
+    else if (newSize < copySize) { // at first we implamented this and the following if loops to behave sortof like the function place,
+        return ptr;                // So it would segment the blocks if thay were bigger then needed, but after many tries this gave us the best score
     }
     else if (!prev_alloc){ // if the block on the left is not allocated, we try to fit the new allocation in to them conbined 
         newBlock = (copySize + GET_SIZE(HDRP(PREV_BLKP(ptr))));
         if(newBlock >= newSize){
-            newp = PREV_BLKP(ptr);          
-            removeFromList(newp); // remove the block on the left from the free list.
+            newp = PREV_BLKP(ptr);              // for readability
+            removeFromList(newp);               // remove the block on the left from the free list.
             PUT(HDRP(newp), PACK(newBlock, 1)); // change the header of the block on the left
             memcpy(newp, ptr, newSize);         // copy the contents of the oldblock in to the one on the left
             PUT(FTRP(newp), PACK(newBlock, 1)); // change the footer to match the header
-            return newp;
+            return newp;                        // return a pointer to the new blocks
         }
     }
-    else if (!next_alloc){
+    else if (!next_alloc){ // if the block on the right is not allocated, we try to fit the new allocation in to them conbined 
         newBlock = (copySize + GET_SIZE(FTRP(NEXT_BLKP(ptr))));
         if(newBlock >= newSize){
-            removeFromList(NEXT_BLKP(ptr));
-            PUT(HDRP(ptr), PACK(newBlock, 1));
+            removeFromList(NEXT_BLKP(ptr));     // if the newblock fits then we just change the header since the data is already the first thing
+            PUT(HDRP(ptr), PACK(newBlock, 1));  // after the header
             PUT(FTRP(ptr), PACK(newBlock, 1));
-            return ptr;
+            return ptr;                         // return the old pointer but with new header and footer 
         }
     }
-    else if (!prev_alloc && !next_alloc){
-        newBlock = (copySize + GET_SIZE(FTRP(NEXT_BLKP(ptr))) + GET_SIZE(FTRP(PREV_BLKP(ptr))));
+    else if (!prev_alloc && !next_alloc){ // if both neighboring blocks are unallocated and the new block didn't fit in to just the left or right conbined with the old block 
+        newBlock = (copySize + GET_SIZE(FTRP(NEXT_BLKP(ptr))) + GET_SIZE(FTRP(PREV_BLKP(ptr)))); // then we check if it fits in all three conbined
         if(newBlock >= newSize){
             newp = PREV_BLKP(ptr);
-            removeFromList(newp);
-            removeFromList(NEXT_BLKP(ptr));
-            PUT(HDRP(newp), PACK(newBlock, 1));
-            memcpy(newp, ptr, copySize); // so it isn't over writen
-            PUT(FTRP(newp), PACK(newBlock, 1));
+            removeFromList(newp);               // remove block on the left
+            removeFromList(NEXT_BLKP(ptr));     // remove bblock on the right
+            PUT(HDRP(newp), PACK(newBlock, 1)); // change the header of the new block, size of all three and allocated
+            memcpy(newp, ptr, copySize);        // copy contents of the old block
+            PUT(FTRP(newp), PACK(newBlock, 1)); // change the footer to match header
         return newp; 
         }
     }
-    else{
-        newp = mm_malloc(size);
+    else{                                       // at this point in the code the new block didn't fit in to any conbination
+        newp = mm_malloc(size);                 // mallock is called 
         if(newp == NULL){
             printf("ERROR: mm_malloc failed in mm_realloc\n");
             exit(1);
         }
         else {
-            memcpy(newp, ptr, size);
-            mm_free(ptr);
-            return newp;
+            memcpy(newp, ptr, size);            // contents copyed over
+            mm_free(ptr);                       // the old block is freed
+            return newp;                        // pointer to new block returned
         }
     }
     return NULL; // hopfully we never end up here....
