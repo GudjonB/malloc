@@ -120,7 +120,6 @@ static char *heap_listp;  /* pointer to first block */
 /* function prototypes for internal helper routines */
 void removeFromList(void *bp);
 void addToList(void *bp);
-static void *Next_fit(size_t asize);
 static void freeListChecker();
 static void *extend_heap(size_t words);
 static void place(void *bp, size_t asize);
@@ -558,7 +557,27 @@ static void checkblock(void *bp)
         printf("Error: header does not match footer\n");
     }
 }
-
+void addToList(void *bp){ //LIFO
+    listNode newNode = (listNode)bp;
+    size_t size = GET_SIZE(HDRP(bp));
+    listNode top = LISTHEAD->next;
+    if(top == NULL){
+        LISTHEAD->next = newNode;
+        newNode->prev = LISTHEAD;
+        newNode->next = NULL;
+    }
+    else{
+        for(;(top->next != NULL)&&(size > GET_SIZE(HDRP(top->next)));top = top->next){
+            newNode->prev = top;
+            newNode->next = top->next;
+            if(top->next != NULL){
+                top->next->prev = newNode;
+                top->next = newNode;
+            }
+        }
+    }
+}
+/*
 void addToList(void *bp){ //LIFO
     listNode newNode = (listNode)bp;
     newNode->next = LISTHEAD->next;
@@ -567,7 +586,7 @@ void addToList(void *bp){ //LIFO
         LISTHEAD->next->prev = newNode;
     }
     LISTHEAD->next = newNode;
-}
+}*/
 
 void removeFromList(void *bp){ // LISTHEAD er alltaf fyrsta node
     listNode nodeToDelete = (listNode)bp;
