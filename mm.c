@@ -436,12 +436,12 @@ static void *find_fit(size_t asize)
     return NULL; /* no fit */
 }
 
- /*   //Next-fit Search
+    //Next-fit Search
 static void *Next_fit(size_t chunkSize)
 {
 
-    listNode PreviousSearchPointer = &mainSearchPointer;
-
+    listNode PreviousSearchPointer = mainSearchPointer;
+ 
     //Start at mainSearchPointer
     //
     for( ; mainSearchPointer != NULL ; 
@@ -475,7 +475,7 @@ static void *Next_fit(size_t chunkSize)
     // Returns a NULL if a fit is not found
     return NULL; 
 }
-*/
+
 
 
 /*
