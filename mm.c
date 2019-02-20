@@ -332,7 +332,7 @@ void mm_checkheap(int verbose)
 /* $begin mmextendheap */
 static void *extend_heap(size_t words) 
 {
-    char *bp,*last;
+    char *bp;
     size_t size;
         
     /* Allocate an even number of words to maintain alignment */
@@ -346,12 +346,10 @@ static void *extend_heap(size_t words)
     PUT(FTRP(bp), PACK(size, 0));         /* free block footer */
     PUT(HDRP(NEXT_BLKP(bp)), PACK(0, 1)); /* new epilogue header */
 
-    last = PREV_BLKP(PREV_BLKP(bp));
-    PUT(HDRP(last), PACK(GET_SIZE(last) + 8, GET_ALLOC(last))); /* old epilog freed */
-    PUT(FTRP(last), PACK(GET_SIZE(last) + 8, GET_ALLOC(last))); /* old epilog freed */
+    
     /* Coalesce if the previous block was free */
     addToList(bp);
-    coalesce(bp);
+    //coalesce(bp);
     return bp;
 }
 /* $end mmextendheap */
