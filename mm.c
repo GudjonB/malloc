@@ -196,7 +196,8 @@ void *mm_malloc(size_t size)
  */
 /* $begin mmfree */
 void mm_free(void *bp)
-{       
+{   
+    mm_checkheap(1);    
     //HEAPCHECK(0);      /* Ekki gleyma að kommenta út þegar við skilum */
     size_t size = GET_SIZE(HDRP(bp));
 
