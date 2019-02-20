@@ -208,17 +208,22 @@ void mm_free(void *bp)
 /* $end mmfree */
 
 /*
- * mm_realloc - naive implementation of mm_realloc
+ * mm_realloc 
+ * if the new size is 0 the block is freed,
+ * if the new size is smaller then the old one the old pointer is returned.
+ * if the pointer ir NULL then mm_mallock is called
+ * if the new size is bigger then the old, checks to see if the new size can be fitted in the neighboring blocks conbined with the old one.
+ * 
  */
 void *mm_realloc(void *ptr, size_t size)
 {
-    if(size == 0){
+    if(size == 0){ // asked for 0 space, pointer freed
         mm_free(ptr);
-        return NULL; // asked for 0 space, pointer freed
+        return NULL; 
     }
-    if(ptr == NULL){
+    if(ptr == NULL){ // asked for new malloc
         ptr = mm_malloc(size);
-        return ptr; // asked for new malloc
+        return ptr; 
     }
 
     void *newp;
@@ -228,20 +233,20 @@ void *mm_realloc(void *ptr, size_t size)
     size_t next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(ptr)));
 
     copySize = GET_SIZE(HDRP(ptr));
-    if (newSize == copySize) {
+    if (newSize == copySize) { // asked to allocate the same amount of space
         return ptr; 
     }
-    else if (newSize < copySize) {
+    else if (newSize < copySize) { // at first we implamented this to behave sortof like the function place, but after many tries this gave us the best score
         return ptr;
     }
-    else if (!prev_alloc){
+    else if (!prev_alloc){ // if the block on the left is not allocated, we try to fit the new allocation in to them conbined 
         newBlock = (copySize + GET_SIZE(HDRP(PREV_BLKP(ptr))));
         if(newBlock >= newSize){
-            removeFromList(PREV_BLKP(ptr));
-            newp = PREV_BLKP(ptr);
-            PUT(HDRP(newp), PACK(newBlock, 1));
-            memcpy(newp, ptr, newSize);
-            PUT(FTRP(newp), PACK(newBlock, 1));
+            newp = PREV_BLKP(ptr);          
+            removeFromList(newp); // remove the block on the left from the free list.
+            PUT(HDRP(newp), PACK(newBlock, 1)); // change the header of the block on the left
+            memcpy(newp, ptr, newSize);         // copy the contents of the oldblock in to the one on the left
+            PUT(FTRP(newp), PACK(newBlock, 1)); // change the footer to match the header
             return newp;
         }
     }
@@ -378,6 +383,8 @@ static void place(void *bp, size_t asize)
 
 /* 
  * find_fit - Find a fit for a block with asize bytes 
+ * implemented with best fit and a tolarence for wasted space so we don't always
+ * have to traverse the whole list
  */
 static void *find_fit(size_t asize)
 {
@@ -389,14 +396,14 @@ static void *find_fit(size_t asize)
 
     for (; bp != NULL; bp = bp->next) {
         if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp))) && (GET_SIZE(HDRP(bp))-asize) < remainder) {
-            remainder = GET_SIZE(HDRP(bp)) - asize;
+            remainder = GET_SIZE(HDRP(bp)) - asize; // the remainder of the block that was not asked for
             bestFit = bp;
-            if(remainder  < 4000){
-                return bestFit;
+            if(remainder  < 4000){ // when the remainder of the block is less then 4000 bits the block is considered goodenough
+                return bestFit;   // the number 4000 is a multiple of 8 and was found through trial and error
             }
         }
     }
-    return bestFit; /*if still NULL = no fit */
+    return bestFit; /*if still NULL = no fit */ // if we got to this point then either a block with a higher remainder is used, or a block was not found :(
 }
 
 
@@ -468,6 +475,9 @@ static void checkblock(void *bp)
     }
 }
 
+/* 
+ *this function inserts the new freeListNodes at the top of the list  
+ */
 void addToList(void *bp){ //LIFO
     listNode newNode = (listNode)bp;
     newNode->next = LISTHEAD->next;
@@ -477,7 +487,9 @@ void addToList(void *bp){ //LIFO
     }
     LISTHEAD->next = newNode;
 }
-
+/* 
+ *this function removes the node that bp points to and connects the neighbor nodes to each other 
+ */
 void removeFromList(void *bp){ // LISTHEAD er alltaf fyrsta node
     listNode nodeToDelete = (listNode)bp;
     if(nodeToDelete->next != NULL ){
