@@ -251,7 +251,7 @@ void *mm_realloc(void *ptr, size_t size)
         if(newBlock >= newSize){
             removeFromList(PREV_BLKP(ptr));
             newp = PREV_BLKP(ptr);
-            if ((newBlock - newSize) >= 2000) { //(DSIZE + OVERHEAD))
+            //if ((newBlock - newSize) >= 2000) { //(DSIZE + OVERHEAD))
             //     memcpy(newp, ptr, newSize);
             //     PUT(HDRP(newp), PACK(newSize, 1));
             //     PUT(FTRP(newp), PACK(newSize, 1));
@@ -293,7 +293,7 @@ void *mm_realloc(void *ptr, size_t size)
             newp = PREV_BLKP(ptr);
             removeFromList(newp);
             removeFromList(NEXT_BLKP(ptr));
-            if ((newBlock - newSize) >= 2000) { //(DSIZE + OVERHEAD))
+            //if ((newBlock - newSize) >= 2000) { //(DSIZE + OVERHEAD))
             //     memcpy(newp, ptr, copySize); // so it isn't over writen
             //     PUT(HDRP(newp), PACK(newSize, 1));
             //     PUT(FTRP(newp), PACK(newSize, 1));
