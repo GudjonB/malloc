@@ -264,7 +264,7 @@ void *mm_realloc(void *ptr, size_t size)
                 memcpy(newp, ptr, newSize);
                 PUT(HDRP(newp), PACK(newBlock, 1));
                 PUT(FTRP(newp), PACK(newBlock, 1));
-            }
+            //}
             return newp;
         }
     }
@@ -307,7 +307,7 @@ void *mm_realloc(void *ptr, size_t size)
                 memcpy(newp, ptr, copySize); // so it isn't over writen
                 PUT(HDRP(newp), PACK(newBlock, 1));
                 PUT(FTRP(newp), PACK(newBlock, 1));
-            }
+            //}
         return newp; 
         }
     }
