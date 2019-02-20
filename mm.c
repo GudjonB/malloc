@@ -175,14 +175,14 @@ void *mm_malloc(size_t size)
     asize = ALIGN(size);
 
     /* Search the free list for a fit */
-    if ((bp = (char *)find_fit(asize)) != NULL) {
+    if ((bp = find_fit(asize)) != NULL) {
         place(bp, asize);
         return bp;
     }
 
     /* No fit found. Get more memory and place the block */
     extendsize = MAX(asize,CHUNKSIZE);
-    if ((bp = (char *)extend_heap(extendsize/WSIZE)) == NULL) {
+    if ((bp = extend_heap(extendsize/WSIZE)) == NULL) {
         return NULL;
     }
     place(bp, asize);
@@ -381,17 +381,8 @@ static void place(void *bp, size_t asize)
  */
 static void *find_fit(size_t asize)
 {
-    /* first fit search */
-    listNode bp;
 
-    for (bp = LISTHEAD->next; bp != NULL; bp = bp->next) {
-        if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp)))) {
-            return bp;
-        }
-    }
-    return NULL; /* no fit */
-
-    /* best fit search 
+    /* best fit search */
     listNode bp = LISTHEAD->next;
     listNode bestFit = NULL;
     size_t remainder = 9999999; // some huges number
@@ -405,7 +396,7 @@ static void *find_fit(size_t asize)
             }
         }
     }
-    return bestFit; if NULL = no fit */
+    return bestFit; /*if still NULL = no fit */
 }
 
 
