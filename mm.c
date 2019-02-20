@@ -493,9 +493,9 @@ void addToList(void *bp){ //LIFO
  *this function removes the node that bp points to and connects the neighbor nodes to each other 
  */
 void removeFromList(void *bp){ // LISTHEAD er alltaf fyrsta node
-    if((listNode)bp == LISTHEAD){
-        return;
-    }
+    // if((listNode)bp == LISTHEAD){
+    //     return;
+    // }
     listNode nodeToDelete = (listNode)bp;
     if(nodeToDelete->next != NULL ){
         nodeToDelete->next->prev = nodeToDelete->prev;
