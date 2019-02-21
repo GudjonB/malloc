@@ -394,8 +394,10 @@ static void *find_fit(size_t asize)
     /* first fit search */
 
     for (listNode bp = LISTHEAD->next; bp != NULL; bp = bp->next) {
-        if ((asize <= GET_SIZE(HDRP((char*)bp)))) {
-            return bp;
+        if(!GET_ALLOC(HDRP(bp))){
+            if ((asize <= GET_SIZE(HDRP(bp)))) {
+                return bp;
+            }
         }
     }
     return NULL; /* no fit */
@@ -413,7 +415,7 @@ static void *find_fit(size_t asize)
             }
         }
     // }
-    return bestFit; /*if still NULL = no fit */ // if we got to this point then either a block with a higher remainder is used, or a block was not found :(
+    return bestFit; if still NULL = no fit */ // if we got to this point then either a block with a higher remainder is used, or a block was not found :(
 }
 
 
@@ -532,6 +534,11 @@ void removeFromList(void *bp){ // LISTHEAD er alltaf fyrsta node
     nodeToDelete->prev->next = nodeToDelete->next;
     nodeToDelete->prev = NULL;
     nodeToDelete->next = NULL;
+}
+static void printFreeList(){
+    for (listNode bp = LISTHEAD->next; bp != NULL; bp = bp->next) {
+        
+    }
 }
 
 static void freeListChecker() {
