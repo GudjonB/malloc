@@ -488,7 +488,7 @@ void addToList(void *bp){ //LIFO
     listNode newNode = (listNode)bp;
     size_t newSize = GET_SIZE(HDRP(bp));
     if(temp == NULL){
-        LISTHEAD ->next = newNode;
+        LISTHEAD->next = newNode;
         newNode->next = NULL;
         newNode->prev = LISTHEAD;
     }
@@ -498,7 +498,7 @@ void addToList(void *bp){ //LIFO
         }
         newNode->prev = temp;
         newNode->next = temp->next;
-        temp->prev->next = newNode;
+        temp->next = newNode;
         if(temp->next != NULL){
             temp->next->prev = newNode;
         }
