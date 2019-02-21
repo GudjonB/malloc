@@ -245,7 +245,8 @@ void *mm_realloc(void *ptr, size_t size)
             newp = PREV_BLKP(ptr);              // for readability
             removeFromList(newp);               // remove the block on the left from the free list.
             PUT(HDRP(newp), PACK(newBlock, 1)); // change the header of the block on the left
-            memcpy(newp, ptr, newSize);         // copy the contents of the oldblock in to the one on the left
+            // memcpy(newp, ptr, newSize);         
+            memmove(newp, ptr, newSize);        // copy the contents of the oldblock in to the one on the left
             PUT(FTRP(newp), PACK(newBlock, 1)); // change the footer to match the header
             return newp;                        // return a pointer to the new blocks
         }
@@ -266,7 +267,8 @@ void *mm_realloc(void *ptr, size_t size)
             removeFromList(newp);               // remove block on the left
             removeFromList(NEXT_BLKP(ptr));     // remove bblock on the right
             PUT(HDRP(newp), PACK(newBlock, 1)); // change the header of the new block, size of all three and allocated
-            memcpy(newp, ptr, copySize);        // copy contents of the old block
+            //memcpy(newp, ptr, copySize);        
+            memmove(newp, ptr, copySize);        // copy contents of the old block
             PUT(FTRP(newp), PACK(newBlock, 1)); // change the footer to match header
         return newp; 
         }
@@ -278,7 +280,8 @@ void *mm_realloc(void *ptr, size_t size)
             exit(1);
         }
         else {
-            memcpy(newp, ptr, size);            // contents copyed over
+            //memcpy(newp, ptr, size);            
+            memmove(newp, ptr, size);            // contents copyed over
             mm_free(ptr);                       // the old block is freed
             return newp;                        // pointer to new block returned
         }
@@ -298,29 +301,28 @@ void mm_checkheap(int verbose)
     }
 
     if ((GET_SIZE(HDRP(heap_listp)) != DSIZE) || !GET_ALLOC(HDRP(heap_listp))) {
-        printf("Bad prologue header\n"); // check if the prolog is allocated and of size 8
+        printf("Bad prologue header\n");
     }
-    checkblock(heap_listp);             // check if the first block is correctly aligned and header and footer match
+    checkblock(heap_listp);
 
-    for (bp = heap_listp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp)) {  // traverse the whole heap exept the epilog and 
-        if (verbose) {                                                  // make sure allocated size is always grater then zero
-            printblock(bp);                                            // in verbose mode prints all blocks
+    for (bp = heap_listp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp)) {
+        if (verbose) {
+            printblock(bp);
 	}
         checkblock(bp);
     }
      
-    if (verbose) {                                                   // prints epilog if verbose
+    if (verbose) {
         printblock(bp);
     }
-
     if ((GET_SIZE(HDRP(bp)) != 0) || !(GET_ALLOC(HDRP(bp)))) {
-        printf("Bad epilogue header\n");                            // check the epilog is allocated zero bits
+        printf("Bad epilogue header\n");
     }
     if(verbose) {
         printf("Checking for errors in the free list\n");
     }
-    freeListChecker();                                              // check if the pointers in the free list are pointing correctly to each other
-    if(verbose) {                                                   // and are not allocated
+    freeListChecker();
+    if(verbose) {
         printf("All checks of the free list have finished!\n");
     }
 }
@@ -460,7 +462,7 @@ static void printblock(void *bp)
     fsize = GET_SIZE(FTRP(bp));
     falloc = GET_ALLOC(FTRP(bp));  
     
-    if (hsize == 0) {              // if size = 0 , then it's the epilog or something is wrong
+    if (hsize == 0) {
         printf("%p: EOL\n", bp);
         return;
     }
@@ -472,10 +474,10 @@ static void printblock(void *bp)
 
 static void checkblock(void *bp) 
 {
-    if ((size_t)bp % 8) {                           // see if the block is aligned
+    if ((size_t)bp % 8) {
         printf("Error: %p is not doubleword aligned\n", bp);
     }
-    if (GET(HDRP(bp)) != GET(FTRP(bp))) {           // check if the headers and footer match
+    if (GET(HDRP(bp)) != GET(FTRP(bp))) {
         printf("Error: header does not match footer\n");
     }
 }
@@ -509,12 +511,12 @@ void removeFromList(void *bp){ // LISTHEAD er alltaf fyrsta node
 static void freeListChecker() {
     listNode last = LISTHEAD, tmp;
     for(tmp = LISTHEAD->next; tmp !=NULL; tmp = tmp->next, last = last->next) {
-        if(!(tmp->prev == last)) { // check to see if the next block points to me as previous
+        if(!(tmp->prev == last)) {
             printf("The first block is not correctly pointing to prev pointer of the second block\n");
             printblock(tmp);
             printblock(last);
         }
-        if(GET_ALLOC(HDRP(tmp))) { // make sure no allocated blocks are in the free list
+        if(GET_ALLOC(HDRP(tmp))) {
             printf("Allocated block in free list!!\n");
         }
     }
