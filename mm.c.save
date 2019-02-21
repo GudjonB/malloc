@@ -62,10 +62,11 @@ team_t team = {
 • Do any allocated blocks overlap?
 • Do the pointers in a heap block point to valid heap addresses?
  */
-/* printf("%s\n, __func__"); seen in the malloc lecture from Freysteinn*/
-#define DEBUG
+
 #ifdef DEBUG
-    #define CHECKHEAP(verbose) printf("%s\n", __func__); mm_checkheap(verbose);
+    #define HEAPCHECK(verbose) mm_checkheap(verbose);
+#else
+    #define HEAPCHECK(verbose);
 #endif
 
 /* $begin mallocmacros */
@@ -78,7 +79,7 @@ team_t team = {
 /* Basic constants and macros */
 #define WSIZE       4       /* word size (bytes) */  
 #define DSIZE       8       /* doubleword size (bytes) */
-#define CHUNKSIZE  (1<<8)  /* initial heap size (bytes) */
+#define CHUNKSIZE  (1<<12)  /* initial heap size (bytes) */
 #define OVERHEAD    8       /* overhead of header and footer (bytes) */
 
 #define MAX(x, y) ((x) > (y)? (x) : (y))  
@@ -114,10 +115,14 @@ struct freeNode{
 };
 /* Global variables */
 static char *heap_listp;  /* pointer to first block */ 
+listNode mainSearchPointer; 
+
+
 
 /* function prototypes for internal helper routines */
 void removeFromList(void *bp);
 void addToList(void *bp);
+static void* copyToNewBlock(void * oldptr, void * ptr, size_t blockSize, size_t newSize);
 static void freeListChecker();
 static void *extend_heap(size_t words);
 static void place(void *bp, size_t asize);
@@ -137,7 +142,7 @@ int mm_init(void)
         return -1;
     }
     PUT(heap_listp, 0);                        /* alignment padding */
-    listNode head = ((listNode)(heap_listp+WSIZE)); // pointer extra 8 bytes 1 DSIZE
+    listNode head = ((listNode)(heap_listp+WSIZE));
     head->next = NULL;
     head->prev = NULL;
     PUT(heap_listp+DSIZE+WSIZE, PACK(OVERHEAD, 1));  /* prologue header */ 
@@ -149,7 +154,7 @@ int mm_init(void)
     if (extend_heap(CHUNKSIZE/WSIZE) == NULL) {
         return -1;
     }
-
+    mainSearchPointer = LISTHEAD->next;
     return 0;
 }
 /* $end mminit */
@@ -159,8 +164,8 @@ int mm_init(void)
  */
 /* $begin mmmalloc */
 void *mm_malloc(size_t size) 
-{   
-    CHECKHEAP(1);      /* lets us know each time he goes in the mm_malloc function when checking the heap */
+{
+    HEAPCHECK(0);
     size_t asize;      /* adjusted block size */
     size_t extendsize; /* amount to extend heap if no fit */
     char *bp;      
@@ -194,8 +199,8 @@ void *mm_malloc(size_t size)
  */
 /* $begin mmfree */
 void mm_free(void *bp)
-{    
-    CHECKHEAP(1);      /* lets us know each time he goes in the mm_free function when checking the heap */
+{
+    HEAPCHECK(0);
     size_t size = GET_SIZE(HDRP(bp));
 
     PUT(HDRP(bp), PACK(size, 0));
@@ -207,22 +212,17 @@ void mm_free(void *bp)
 /* $end mmfree */
 
 /*
- * mm_realloc 
- * if the new size is 0 the block is freed,
- * if the new size is smaller then the old one the old pointer is returned.
- * if the pointer ir NULL then mm_mallock is called
- * if the new size is bigger then the old, checks to see if the new size can be fitted in the neighboring blocks conbined with the old one.
- * 
+ * mm_realloc - naive implementation of mm_realloc
  */
 void *mm_realloc(void *ptr, size_t size)
 {
-    if(size == 0){ // asked for 0 space, pointer freed
+    if(size == NULL){
         mm_free(ptr);
-        return NULL; 
+        return NULL; // asked for 0 space, pointer freed
     }
-    if(ptr == NULL){ // asked for new malloc
+    if(ptr == NULL){
         ptr = mm_malloc(size);
-        return ptr; 
+        return ptr; // asked for 0 space, pointer freed
     }
 
     void *newp;
@@ -232,60 +232,89 @@ void *mm_realloc(void *ptr, size_t size)
     size_t next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(ptr)));
 
     copySize = GET_SIZE(HDRP(ptr));
-    if (newSize <= copySize) { // asked to allocate the same amount of space
+    if (newSize == copySize) {
         return ptr; 
     }
-     // at first we implamented this and the following if loops to behave sortof like the function place,
-     // So it would segment the blocks if thay were bigger then needed, but after many tries this gave us the best score
-
-    else if (!prev_alloc){ // if the block on the left is not allocated, we try to fit the new allocation in to them conbined 
+    else if (newSize < copySize) {
+        return copyToNewBlock(ptr ,ptr, copySize, newSize);
+    }
+    else if (!prev_alloc && next_alloc){
         newBlock = (copySize + GET_SIZE(HDRP(PREV_BLKP(ptr))));
         if(newBlock >= newSize){
-            newp = PREV_BLKP(ptr);              // for readability
-            removeFromList(newp);               // remove the block on the left from the free list.
-            PUT(HDRP(newp), PACK(newBlock, 1)); // change the header of the block on the left
-            // memcpy(newp, ptr, newSize);         
-            memmove(newp, ptr, newSize);        // copy the contents of the oldblock in to the one on the left
-            PUT(FTRP(newp), PACK(newBlock, 1)); // change the footer to match the header
-            return newp;                        // return a pointer to the new blocks
+            removeFromList(PREV_BLKP(ptr));
+            newp = PREV_BLKP(ptr);
+            if ((newBlock - newSize) >= (DSIZE + OVERHEAD)) { // asked for same size
+                PUT(HDRP(newp), PACK(newSize, 1));
+                memcpy(newp, ptr, newSize);
+                PUT(FTRP(newp), PACK(newSize, 1));
+                PUT(HDRP(NEXT_BLKP(newp)), PACK(newBlock - newSize, 0));
+                PUT(FTRP(NEXT_BLKP(newp)), PACK(newBlock - newSize, 0));
+                addToList(NEXT_BLKP(newp));
+                coalesce(NEXT_BLKP(newp));
+            }
+            else{
+                PUT(HDRP(newp), PACK(newBlock, 1));
+                memcpy(newp, ptr, newSize);
+                PUT(FTRP(newp), PACK(newBlock, 1));
+            }
+            return newp;
         }
     }
-    else if (!next_alloc){ // if the block on the right is not allocated, we try to fit the new allocation in to them conbined 
+    else if (prev_alloc && !next_alloc){
         newBlock = (copySize + GET_SIZE(FTRP(NEXT_BLKP(ptr))));
         if(newBlock >= newSize){
-            removeFromList(NEXT_BLKP(ptr));     // if the newblock fits then we just change the header since the data is already the first thing
-            PUT(HDRP(ptr), PACK(newBlock, 1));  // after the header
-            PUT(FTRP(ptr), PACK(newBlock, 1));
-            return ptr;                         // return the old pointer but with new header and footer 
+            removeFromList(NEXT_BLKP(ptr));
+            if ((newBlock - newSize) >= (DSIZE + OVERHEAD)) { // asked for same size
+                PUT(HDRP(ptr), PACK(newSize, 1));
+                PUT(FTRP(ptr), PACK(newSize, 1));
+                PUT(HDRP(NEXT_BLKP(ptr)), PACK(newBlock - newSize, 0));
+                PUT(FTRP(NEXT_BLKP(ptr)), PACK(newBlock - newSize, 0));
+                addToList(NEXT_BLKP(ptr));
+                coalesce(NEXT_BLKP(ptr));
+            }
+            else{
+                PUT(HDRP(ptr), PACK(newBlock, 1));
+                PUT(FTRP(ptr), PACK(newBlock, 1));
+            }
+            return ptr;
         }
     }
-    else if (!prev_alloc && !next_alloc){ // if both neighboring blocks are unallocated and the new block didn't fit in to just the left or right conbined with the old block 
-        newBlock = (copySize + GET_SIZE(FTRP(NEXT_BLKP(ptr))) + GET_SIZE(FTRP(PREV_BLKP(ptr)))); // then we check if it fits in all three conbined
+    else if (!prev_alloc && !next_alloc){
+        newBlock = (copySize + GET_SIZE(FTRP(NEXT_BLKP(ptr))) + GET_SIZE(FTRP(PREV_BLKP(ptr))));
         if(newBlock >= newSize){
             newp = PREV_BLKP(ptr);
-            removeFromList(newp);               // remove block on the left
-            removeFromList(NEXT_BLKP(ptr));     // remove bblock on the right
-            PUT(HDRP(newp), PACK(newBlock, 1)); // change the header of the new block, size of all three and allocated
-            //memcpy(newp, ptr, copySize);        
-            memmove(newp, ptr, copySize);        // copy contents of the old block
-            PUT(FTRP(newp), PACK(newBlock, 1)); // change the footer to match header
+            removeFromList(newp);
+            removeFromList(NEXT_BLKP(ptr));
+            if ((newBlock - newSize) >= (DSIZE + OVERHEAD)) { 
+                PUT(HDRP(newp), PACK(newSize, 1));
+                memcpy(newp, ptr, copySize); // so it isn't over writen
+                PUT(FTRP(newp), PACK(newSize, 1));
+
+                PUT(HDRP(NEXT_BLKP(newp)), PACK(newBlock - newSize, 0)); // new free block
+                PUT(FTRP(NEXT_BLKP(newp)), PACK(newBlock - newSize, 0));
+                addToList(NEXT_BLKP(newp));
+                coalesce(NEXT_BLKP(newp));
+            }
+            else { 
+                PUT(HDRP(newp), PACK(newBlock, 1));
+                memcpy(newp, ptr, copySize); // so it isn't over writen
+                PUT(FTRP(newp), PACK(newBlock, 1));
+            }
         return newp; 
         }
     }
-    else{                                       // at this point in the code the new block didn't fit in to any conbination
-        newp = mm_malloc(size);                 // mallock is called 
+    else{
+        newp = mm_malloc(size);
         if(newp == NULL){
             printf("ERROR: mm_malloc failed in mm_realloc\n");
             exit(1);
         }
         else {
-            //memcpy(newp, ptr, size);            
-            memmove(newp, ptr, size);            // contents copyed over
-            mm_free(ptr);                       // the old block is freed
-            return newp;                        // pointer to new block returned
+            memcpy(newp, ptr, size);
+            mm_free(ptr);
+            return newp;
         }
     }
-    return NULL; // hopfully we never end up here....
 }
 
 /* 
@@ -348,11 +377,9 @@ static void *extend_heap(size_t words)
     PUT(FTRP(bp), PACK(size, 0));         /* free block footer */
     PUT(HDRP(NEXT_BLKP(bp)), PACK(0, 1)); /* new epilogue header */
 
-    
     /* Coalesce if the previous block was free */
     addToList(bp);
-    //coalesce(bp);
-    return coalesce(bp);
+    return bp;
 }
 /* $end mmextendheap */
 
@@ -371,11 +398,10 @@ static void place(void *bp, size_t asize)
         PUT(HDRP(bp), PACK(asize, 1));
         PUT(FTRP(bp), PACK(asize, 1));
         removeFromList(bp);
-        PUT(HDRP(NEXT_BLKP(bp)), PACK(csize-asize, 0));
-        PUT(FTRP(NEXT_BLKP(bp)), PACK(csize-asize, 0));
-
-        addToList(NEXT_BLKP(bp));
-        coalesce(NEXT_BLKP(bp));
+        bp = NEXT_BLKP(bp);
+        PUT(HDRP(bp), PACK(csize-asize, 0));
+        PUT(FTRP(bp), PACK(csize-asize, 0));
+        addToList(bp);
     }
     else { 
         PUT(HDRP(bp), PACK(csize, 1));
@@ -388,28 +414,60 @@ static void place(void *bp, size_t asize)
 
 /* 
  * find_fit - Find a fit for a block with asize bytes 
- * implemented with best fit and a tolarence for wasted space so we don't always
- * have to traverse the whole list
  */
 static void *find_fit(size_t asize)
 {
+    /* first fit search */
+    listNode bp;
 
-    /* best fit search */
-    listNode bp = LISTHEAD->next;
-    listNode bestFit = NULL;
-    size_t remainder = 9999999; // some huges number
-        for (; bp != NULL; bp = bp->next) {
-            if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp))) && (GET_SIZE(HDRP(bp))-asize) < remainder) {
-                remainder = GET_SIZE(HDRP(bp)) - asize; // the remainder of the block that was not asked for
-                bestFit = bp;
-                if(remainder  <= 3900){ // when the remainder of the block is less then 3600 bits the block is considered goodenough
-                    return bestFit;   // the number 3600 is a multiple of 8 and was found through trial and error
-                }
-            }
+    for (bp = LISTHEAD->next; bp != NULL; bp = bp->next) {
+        if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp)))) {
+            return bp;
         }
-    // }
-    return bestFit; /*if still NULL = no fit */ // if we got to this point then either a block with a higher remainder is used, or a block was not found :(
+    }
+    return NULL; /* no fit */
 }
+
+ /*   //Next-fit Search
+static void *Next_fit(size_t chunkSize)
+{
+
+    listNode PreviousSearchPointer = &mainSearchPointer;
+
+    //Start at mainSearchPointer
+    //
+    for( ; mainSearchPointer != NULL ; 
+        mainSearchPointer = mainSearchPointer->next)
+    {
+        //Check if the chunk is allocated, and if there is enough space
+        //
+        if(!GET_ALLOC(HDRP(mainSearchPointer)) 
+            && chunkSize <= GET_SIZE(HDRP(mainSearchPointer)))
+        {
+            return mainSearchPointer;
+        }
+    }
+
+    //If no chunk is good enough we gotta start from the beginning
+    //
+
+    for(mainSearchPointer = LISTHEAD->next; 
+        mainSearchPointer != PreviousSearchPointer; 
+        mainSearchPointer = mainSearchPointer->next)
+    {
+        // Same routine check, checks if the chunk is allocated, and if there is enough space
+        //
+        if(!GET_ALLOC(HDRP(mainSearchPointer)) 
+            && chunkSize <= GET_SIZE(HDRP(mainSearchPointer)))
+        {
+            return mainSearchPointer;
+        }
+    }
+    
+    // Returns a NULL if a fit is not found
+    return NULL; 
+}
+*/
 
 
 /*
@@ -446,7 +504,6 @@ static void *coalesce(void *bp)
         PUT(FTRP(NEXT_BLKP(bp)), PACK(size, 0));
         bp = PREV_BLKP(bp);
     }
-    
 
     return bp;
 }
@@ -481,22 +538,16 @@ static void checkblock(void *bp)
     }
 }
 
-/* 
- *this function inserts the new freeListNodes at the top of the list  
- */
 void addToList(void *bp){ //LIFO
-
     listNode newNode = (listNode)bp;
     newNode->next = LISTHEAD->next;
     newNode->prev = LISTHEAD;
     if(LISTHEAD->next != NULL){
         LISTHEAD->next->prev = newNode;
     }
-    LISTHEAD->next = newNode; 
+    LISTHEAD->next = newNode;
 }
-/* 
- *this function removes the node that bp points to and connects the neighbor nodes to each other 
- */
+
 void removeFromList(void *bp){ // LISTHEAD er alltaf fyrsta node
     listNode nodeToDelete = (listNode)bp;
     if(nodeToDelete->next != NULL ){
@@ -516,7 +567,23 @@ static void freeListChecker() {
             printblock(last);
         }
         if(GET_ALLOC(HDRP(tmp))) {
-            printf("Allocated block in free list!!\n");
+            printf("Allocated an block in free list\n");
         }
     }
+}
+static void* copyToNewBlock(void * oldptr, void * ptr, size_t blockSize, size_t newSize){
+    if ((blockSize - newSize) >= (DSIZE + OVERHEAD)) { // asked for same size
+            PUT(HDRP(ptr), PACK(newSize, 1));
+            memcpy(ptr, oldptr, newSize);
+            PUT(FTRP(ptr), PACK(newSize, 1));
+            PUT(HDRP(NEXT_BLKP(ptr)), PACK(blockSize - newSize, 0));
+            PUT(FTRP(NEXT_BLKP(ptr)), PACK(blockSize - newSize, 0));
+            addToList(NEXT_BLKP(ptr));
+            coalesce(NEXT_BLKP(ptr));
+        }
+    else { 
+        PUT(HDRP(ptr), PACK(blockSize, 1));
+        PUT(FTRP(ptr), PACK(blockSize, 1));
+    }
+        return ptr; 
 }
