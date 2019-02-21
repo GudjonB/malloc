@@ -79,7 +79,7 @@ team_t team = {
 /* Basic constants and macros */
 #define WSIZE       4       /* word size (bytes) */  
 #define DSIZE       8       /* doubleword size (bytes) */
-#define CHUNKSIZE  (1<<7)  /* initial heap size (bytes) */
+#define CHUNKSIZE  (1<<8)  /* initial heap size (bytes) */
 #define OVERHEAD    8       /* overhead of header and footer (bytes) */
 
 #define MAX(x, y) ((x) > (y)? (x) : (y))  
