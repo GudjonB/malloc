@@ -396,7 +396,7 @@ static void *find_fit(size_t asize)
     listNode bp = LISTHEAD->next;
     listNode bestFit = NULL;
     size_t remainder = 9999999; // some huges number
-    if(asize < 400){
+    if(asize < 1000){
         for (; bp != NULL; bp = bp->next) {
             if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp))) && (GET_SIZE(HDRP(bp))-asize) < remainder) {
                 remainder = GET_SIZE(HDRP(bp)) - asize; // the remainder of the block that was not asked for
