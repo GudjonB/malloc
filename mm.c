@@ -63,7 +63,7 @@ team_t team = {
 • Do the pointers in a heap block point to valid heap addresses?
  */
 /* printf("%s\n, __func__"); seen in the malloc lecture from Freysteinn, lets us know which function we are currently checking */
-#define DEBUG                  /* Comment this out when not debugging! */
+//#define DEBUG                  /* Comment this out when not debugging! */
 #ifdef DEBUG                   /* If and only if the DEBUG flag is set we go here */
     #define CHECKHEAP(verbose) printf("%s\n", __func__); mm_checkheap(verbose);
 #else                          /* else we ignore its call with this else statement */
