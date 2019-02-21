@@ -484,7 +484,8 @@ static void checkblock(void *bp)
  */
 void addToList(void *bp){ //LIFO
 
-    listNode temp = LISTHEAD->next,newNode = (listNode)bp;
+    listNode temp = LISTHEAD->next;
+    listNode newNode = (listNode)bp;
     size_t newSize = GET_SIZE(HDRP(bp));
     if(temp == NULL){
         LISTHEAD ->next = newNode;
