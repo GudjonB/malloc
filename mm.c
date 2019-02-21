@@ -397,7 +397,7 @@ static void *find_fit(size_t asize)
     listNode bestFit = NULL;
     size_t remainder = 9999999; // some huges number
     if(asize < 2500){
-        for (; GET_SIZE(HDRP(bp)) > 0; bp = bp->next) {
+        for (; bp != NULL; bp = bp->next) {
         if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp)))) {
             return bp;
         }
