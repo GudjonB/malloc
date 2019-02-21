@@ -63,7 +63,8 @@ team_t team = {
 • Do the pointers in a heap block point to valid heap addresses?
  */
 /* printf("%s\n, __func__"); seen in the malloc lecture from Freysteinn, lets us know which function we are currently checking */
-#define DEBUG                  /* Comment this out when not debugging! */
+
+//#define DEBUG                  /* Comment this out when not debugging! */
 #ifdef DEBUG                   /* If and only if the DEBUG flag is set we go here */
     #define CHECKHEAP(verbose) printf("%s\n", __func__); mm_checkheap(verbose);
 #else                          /* else we ignore its call with this else statement */
@@ -302,28 +303,28 @@ void mm_checkheap(int verbose)
     }
 
     if ((GET_SIZE(HDRP(heap_listp)) != DSIZE) || !GET_ALLOC(HDRP(heap_listp))) {
-        printf("Bad prologue header\n");
+        printf("Bad prologue header\n");// check if the prolog is allocated and of size 8
     }
-    checkblock(heap_listp);
+    checkblock(heap_listp); // check if the first block is correctly aligned and header and footer match
 
-    for (bp = heap_listp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp)) {
-        if (verbose) {
-            printblock(bp);
+    for (bp = heap_listp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp)) {  // traverse the whole heap exept the epilog and 
+        if (verbose) {                                                  // make sure allocated size is always grater then zero
+            printblock(bp);                                            // in verbose mode prints all blocks
 	}
         checkblock(bp);
     }
      
-    if (verbose) {
+    if (verbose) {                                                   // prints epilog if verbose
         printblock(bp);
     }
     if ((GET_SIZE(HDRP(bp)) != 0) || !(GET_ALLOC(HDRP(bp)))) {
-        printf("Bad epilogue header\n");
+        printf("Bad epilogue header\n");                            // check the epilog is allocated zero bits
     }
     if(verbose) {
         printf("Checking for errors in the free list\n");
     }
-    freeListChecker();
-    if(verbose) {
+    freeListChecker();                                              // check if the pointers in the free list are pointing correctly to each other
+    if(verbose) {                                                   // and are not allocated
         printf("All checks of the free list have finished!\n");
     }
 }
@@ -463,7 +464,7 @@ static void printblock(void *bp)
     fsize = GET_SIZE(FTRP(bp));
     falloc = GET_ALLOC(FTRP(bp));  
     
-    if (hsize == 0) {
+    if (hsize == 0) {              // if size = 0 , then it's the epilog or something is wrong
         printf("%p: EOL\n", bp);
         return;
     }
@@ -475,10 +476,10 @@ static void printblock(void *bp)
 
 static void checkblock(void *bp) 
 {
-    if ((size_t)bp % 8) {
+    if ((size_t)bp % 8) {                           // see if the block is aligned
         printf("Error: %p is not doubleword aligned\n", bp);
     }
-    if (GET(HDRP(bp)) != GET(FTRP(bp))) {
+    if (GET(HDRP(bp)) != GET(FTRP(bp))) {           // check if the headers and footer match
         printf("Error: header does not match footer\n");
     }
 }
@@ -512,12 +513,12 @@ void removeFromList(void *bp){ // LISTHEAD er alltaf fyrsta node
 static void freeListChecker() {
     listNode last = LISTHEAD, tmp;
     for(tmp = LISTHEAD->next; tmp !=NULL; tmp = tmp->next, last = last->next) {
-        if(!(tmp->prev == last)) {
+        if(!(tmp->prev == last)) {// check to see if the next block points to me as previous
             printf("The first block is not correctly pointing to prev pointer of the second block\n");
             printblock(tmp);
             printblock(last);
         }
-        if(GET_ALLOC(HDRP(tmp))) {
+        if(GET_ALLOC(HDRP(tmp))) { // make sure no allocated blocks are in the free list
             printf("Allocated block in free list!!\n");
         }
     }
