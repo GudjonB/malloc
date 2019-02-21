@@ -63,7 +63,7 @@ team_t team = {
 • Do the pointers in a heap block point to valid heap addresses?
  */
 /* printf("%s\n, __func__"); seen in the malloc lecture from Freysteinn*/
-#define DEBUG
+#define DEBUG                  /* Comment this out when not debugging! */
 #ifdef DEBUG
     #define CHECKHEAP(verbose) printf("%s\n", __func__); mm_checkheap(verbose);
 #endif
