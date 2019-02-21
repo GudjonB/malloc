@@ -484,34 +484,13 @@ static void checkblock(void *bp)
  */
 void addToList(void *bp){ //LIFO
 
-    listNode temp = LISTHEAD->next,newNode = (listNode)bp;
-    size_t newSize = GET_SIZE(HDRP(bp));
-    if(temp == NULL){
-        LISTHEAD ->next = newNode;
-        newNode->next = NULL;
-        newNode->prev = LISTHEAD;
-    }
-    else{
-        while(temp->next != NULL && (GET_SIZE(HDRP(temp->next)) < newSize)){
-            temp = temp->next;
-        }
-        newNode->prev = temp;
-        newNode->next = temp->next;
-        temp->prev->next = newNode;
-        if(temp->next != NULL){
-            temp->next->prev = newNode;
-        }
-
-    }
-
-/*
     listNode newNode = (listNode)bp;
     newNode->next = LISTHEAD->next;
     newNode->prev = LISTHEAD;
     if(LISTHEAD->next != NULL){
         LISTHEAD->next->prev = newNode;
     }
-    LISTHEAD->next = newNode; */
+    LISTHEAD->next = newNode; 
 }
 /* 
  *this function removes the node that bp points to and connects the neighbor nodes to each other 
