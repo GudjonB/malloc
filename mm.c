@@ -396,13 +396,25 @@ static void *find_fit(size_t asize)
     listNode bp = LISTHEAD->next;
     listNode bestFit = NULL;
     size_t remainder = 9999999; // some huges number
-
-    for (; bp != NULL; bp = bp->next) {
-        if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp))) && (GET_SIZE(HDRP(bp))-asize) < remainder) {
-            remainder = GET_SIZE(HDRP(bp)) - asize; // the remainder of the block that was not asked for
-            bestFit = bp;
-            if(remainder  <= 3600){ // when the remainder of the block is less then 3600 bits the block is considered goodenough
-                return bestFit;   // the number 3600 is a multiple of 8 and was found through trial and error
+    if(asize < 400){
+        for (; bp != NULL; bp = bp->next) {
+            if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp))) && (GET_SIZE(HDRP(bp))-asize) < remainder) {
+                remainder = GET_SIZE(HDRP(bp)) - asize; // the remainder of the block that was not asked for
+                bestFit = bp;
+                if(remainder  <= 100){ // when the remainder of the block is less then 3600 bits the block is considered goodenough
+                    return bestFit;   // the number 3600 is a multiple of 8 and was found through trial and error
+                }
+            }
+        }
+    }
+    else {
+        for (; bp != NULL; bp = bp->next) {
+            if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp))) && (GET_SIZE(HDRP(bp))-asize) < remainder) {
+                remainder = GET_SIZE(HDRP(bp)) - asize; // the remainder of the block that was not asked for
+                bestFit = bp;
+                if(remainder  <= 3600){ // when the remainder of the block is less then 3600 bits the block is considered goodenough
+                    return bestFit;   // the number 3600 is a multiple of 8 and was found through trial and error
+                }
             }
         }
     }
