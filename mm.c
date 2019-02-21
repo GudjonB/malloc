@@ -79,7 +79,7 @@ team_t team = {
 /* Basic constants and macros */
 #define WSIZE       4       /* word size (bytes) */  
 #define DSIZE       8       /* doubleword size (bytes) */
-#define CHUNKSIZE  (1<<6)  /* initial heap size (bytes) */
+#define CHUNKSIZE  (1<<8)  /* initial heap size (bytes) */
 #define OVERHEAD    8       /* overhead of header and footer (bytes) */
 
 #define MAX(x, y) ((x) > (y)? (x) : (y))  
@@ -400,7 +400,7 @@ static void *find_fit(size_t asize)
             if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp))) && (GET_SIZE(HDRP(bp))-asize) < remainder) {
                 remainder = GET_SIZE(HDRP(bp)) - asize; // the remainder of the block that was not asked for
                 bestFit = bp;
-                if(remainder  <= 3600){ // when the remainder of the block is less then 3600 bits the block is considered goodenough
+                if(remainder  <= 4000){ // when the remainder of the block is less then 3600 bits the block is considered goodenough
                     return bestFit;   // the number 3600 is a multiple of 8 and was found through trial and error
                 }
             }
