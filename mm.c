@@ -79,7 +79,7 @@ team_t team = {
 /* Basic constants and macros */
 #define WSIZE       4       /* word size (bytes) */  
 #define DSIZE       8       /* doubleword size (bytes) */
-#define CHUNKSIZE  (1<<12)  /* initial heap size (bytes) */
+#define CHUNKSIZE  (1<<8)  /* initial heap size (bytes) */
 #define OVERHEAD    8       /* overhead of header and footer (bytes) */
 
 #define MAX(x, y) ((x) > (y)? (x) : (y))  
@@ -232,12 +232,12 @@ void *mm_realloc(void *ptr, size_t size)
     size_t next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(ptr)));
 
     copySize = GET_SIZE(HDRP(ptr));
-    if (newSize == copySize) { // asked to allocate the same amount of space
+    if (newSize <= copySize) { // asked to allocate the same amount of space
         return ptr; 
     }
-    else if (newSize < copySize) { // at first we implamented this and the following if loops to behave sortof like the function place,
-        return ptr;                // So it would segment the blocks if thay were bigger then needed, but after many tries this gave us the best score
-    }
+     // at first we implamented this and the following if loops to behave sortof like the function place,
+     // So it would segment the blocks if thay were bigger then needed, but after many tries this gave us the best score
+
     else if (!prev_alloc){ // if the block on the left is not allocated, we try to fit the new allocation in to them conbined 
         newBlock = (copySize + GET_SIZE(HDRP(PREV_BLKP(ptr))));
         if(newBlock >= newSize){
@@ -397,16 +397,16 @@ static void *find_fit(size_t asize)
     listNode bp = LISTHEAD;
     listNode bestFit = NULL;
     size_t remainder = 9999999; // some huges number
-
-    for (; bp != NULL; bp = bp->next) {
-        if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp))) && (GET_SIZE(HDRP(bp))-asize) < remainder) {
-            remainder = GET_SIZE(HDRP(bp)) - asize; // the remainder of the block that was not asked for
-            bestFit = bp;
-            if(remainder  <= 3600){ // when the remainder of the block is less then 3600 bits the block is considered goodenough
-                return bestFit;   // the number 3600 is a multiple of 8 and was found through trial and error
+        for (; bp != NULL; bp = bp->next) {
+            if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp))) && (GET_SIZE(HDRP(bp))-asize) < remainder) {
+                remainder = GET_SIZE(HDRP(bp)) - asize; // the remainder of the block that was not asked for
+                bestFit = bp;
+                if(remainder  <= 3900){ // when the remainder of the block is less then 3600 bits the block is considered goodenough
+                    return bestFit;   // the number 3600 is a multiple of 8 and was found through trial and error
+                }
             }
         }
-    }
+    // }
     return bestFit; /*if still NULL = no fit */ // if we got to this point then either a block with a higher remainder is used, or a block was not found :(
 }
 
@@ -484,16 +484,35 @@ static void checkblock(void *bp)
  *this function inserts the new freeListNodes at the top of the list  
  */
 void addToList(void *bp){ //LIFO
-    if(freelist == NULL){
-        freelist = (listNode)bp;
+
+    listNode temp = LISTHEAD->next,newNode = (listNode)bp;
+    size_t newSize = GET_SIZE(HDRP(bp));
+    if(temp == NULL){
+        LISTHEAD ->next = newNode;
+        newNode->next = NULL;
+        newNode->prev = LISTHEAD;
     }
+    else{
+        while(temp->next != NULL && (GET_SIZE(HDRP(temp->next)) < newSize)){
+            temp = temp->next;
+        }
+        newNode->prev = temp;
+        newNode->next = temp->next;
+        temp->prev->next = newNode;
+        if(temp->next != NULL){
+            temp->next->prev = newNode;
+        }
+
+    }
+
+/*
     listNode newNode = (listNode)bp;
     newNode->next = LISTHEAD->next;
     newNode->prev = LISTHEAD;
     if(LISTHEAD->next != NULL){
         LISTHEAD->next->prev = newNode;
     }
-    LISTHEAD->next = newNode;
+    LISTHEAD->next = newNode; */
 }
 /* 
  *this function removes the node that bp points to and connects the neighbor nodes to each other 
