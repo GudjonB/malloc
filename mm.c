@@ -160,7 +160,7 @@ int mm_init(void)
 /* $begin mmmalloc */
 void *mm_malloc(size_t size) 
 {   
-    CHECKHEAP(0);      /* lets us know each time he goes in the mm_malloc function when checking the heap */
+    CHECKHEAP(1);      /* lets us know each time he goes in the mm_malloc function when checking the heap */
     size_t asize;      /* adjusted block size */
     size_t extendsize; /* amount to extend heap if no fit */
     char *bp;      
@@ -195,7 +195,7 @@ void *mm_malloc(size_t size)
 /* $begin mmfree */
 void mm_free(void *bp)
 {    
-    CHECKHEAP(0);      /* lets us know each time he goes in the mm_free function when checking the heap */
+    CHECKHEAP(1);      /* lets us know each time he goes in the mm_free function when checking the heap */
     size_t size = GET_SIZE(HDRP(bp));
 
     PUT(HDRP(bp), PACK(size, 0));
