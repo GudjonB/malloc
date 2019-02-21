@@ -62,11 +62,10 @@ team_t team = {
 • Do any allocated blocks overlap?
 • Do the pointers in a heap block point to valid heap addresses?
  */
-/* printf("%s\n, __func__"); */
+/* printf("%s\n, __func__"); seen in the malloc lecture from Freysteinn*/
+#define DEBUG
 #ifdef DEBUG
-    #define CHECKHEAP(verbose) printf("%s\n, __func__"); mm_checkheap(verbose);
-#else
-    #define CHECKHEAP(verbose);
+    #define CHECKHEAP(verbose) printf("%s\n", __func__); mm_checkheap(verbose);
 #endif
 
 /* $begin mallocmacros */
@@ -161,7 +160,7 @@ int mm_init(void)
 /* $begin mmmalloc */
 void *mm_malloc(size_t size) 
 {   
-    CHECKHEAP(0);      /* Ekki gleyma að kommenta út þegar við skilum */
+    CHECKHEAP(0);      /* lets us know each time he goes in the mm_malloc function when checking the heap */
     size_t asize;      /* adjusted block size */
     size_t extendsize; /* amount to extend heap if no fit */
     char *bp;      
@@ -196,7 +195,7 @@ void *mm_malloc(size_t size)
 /* $begin mmfree */
 void mm_free(void *bp)
 {    
-    CHECKHEAP(0);      /* Ekki gleyma að kommenta út þegar við skilum */
+    CHECKHEAP(0);      /* lets us know each time he goes in the mm_free function when checking the heap */
     size_t size = GET_SIZE(HDRP(bp));
 
     PUT(HDRP(bp), PACK(size, 0));
