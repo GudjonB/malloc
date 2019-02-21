@@ -233,12 +233,12 @@ void *mm_realloc(void *ptr, size_t size)
     size_t next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(ptr)));
 
     copySize = GET_SIZE(HDRP(ptr));
-    if (newSize == copySize) { // asked to allocate the same amount of space
+    if (newSize <= copySize) { // asked to allocate the same amount of space
         return ptr; 
     }
-    else if (newSize < copySize) { // at first we implamented this and the following if loops to behave sortof like the function place,
-        return ptr;                // So it would segment the blocks if thay were bigger then needed, but after many tries this gave us the best score
-    }
+     // at first we implamented this and the following if loops to behave sortof like the function place,
+     // So it would segment the blocks if thay were bigger then needed, but after many tries this gave us the best score
+
     else if (!prev_alloc){ // if the block on the left is not allocated, we try to fit the new allocation in to them conbined 
         newBlock = (copySize + GET_SIZE(HDRP(PREV_BLKP(ptr))));
         if(newBlock >= newSize){
@@ -483,21 +483,40 @@ static void checkblock(void *bp)
  *this function inserts the new freeListNodes at the top of the list  
  */
 void addToList(void *bp){ //LIFO
+
+    listNode temp = LISTHEAD->next,newNode = (listNode)bp;
+    size_t newSize = GET_SIZE(HDRP(bp));
+    if(temp == NULL){
+        LISTHEAD ->next = newNode;
+        newNode->next = NULL;
+        newNode->prev = LISTHEAD;
+    }
+    else{
+        while(temp->next != NULL && (GET_SIZE(HDRP(temp->next)) < newSize)){
+            temp = temp->next;
+        }
+        newNode->prev = temp;
+        newNode->next = temp->next;
+        temp->prev->next = newNode;
+        if(temp->next != NULL){
+            temp->next->prev = newNode;
+        }
+
+    }
+
+/*
     listNode newNode = (listNode)bp;
     newNode->next = LISTHEAD->next;
     newNode->prev = LISTHEAD;
     if(LISTHEAD->next != NULL){
         LISTHEAD->next->prev = newNode;
     }
-    LISTHEAD->next = newNode;
+    LISTHEAD->next = newNode; */
 }
 /* 
  *this function removes the node that bp points to and connects the neighbor nodes to each other 
  */
 void removeFromList(void *bp){ // LISTHEAD er alltaf fyrsta node
-    // if((listNode)bp == LISTHEAD){
-    //     return;
-    // }
     listNode nodeToDelete = (listNode)bp;
     if(nodeToDelete->next != NULL ){
         nodeToDelete->next->prev = nodeToDelete->prev;
