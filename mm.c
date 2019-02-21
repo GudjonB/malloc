@@ -392,9 +392,8 @@ static void place(void *bp, size_t asize)
 static void *find_fit(size_t asize)
 {
     /* first fit search */
-    listNode bp;
 
-    for (bp = LISTHEAD->next; bp != NULL; bp = bp->next) {
+    for (listNode bp = LISTHEAD->next; bp != NULL; bp = bp->next) {
         if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp)))) {
             return bp;
         }
