@@ -104,7 +104,7 @@ team_t team = {
 #define PREV_BLKP(bp)  ((char *)(bp) - GET_SIZE(((char *)(bp) - DSIZE)))
 
 /* Get head of the free list*/
-#define LISTHEAD (freelist)
+#define LISTHEAD ((listNode)(heap_listp-WSIZE-DSIZE))
 /* $end mallocmacros */
 
 /* Node for the free node list */
@@ -115,7 +115,6 @@ struct freeNode{
 };
 /* Global variables */
 static char *heap_listp;  /* pointer to first block */ 
-static listNode freelist;
 
 /* function prototypes for internal helper routines */
 void removeFromList(void *bp);
@@ -135,20 +134,22 @@ static void checkblock(void *bp);
 int mm_init(void) 
 {
     /* create the initial empty heap */
-    if ((heap_listp = mem_sbrk(4*WSIZE)) == NULL) {
+    if ((heap_listp = mem_sbrk(6*WSIZE)) == NULL) {
         return -1;
     }
     PUT(heap_listp, 0);                        /* alignment padding */
-    PUT(heap_listp+WSIZE, PACK(OVERHEAD, 1));  /* prologue header */ 
-    PUT(heap_listp+DSIZE, PACK(OVERHEAD, 1));  /* prologue footer */ 
-    PUT(heap_listp+DSIZE+WSIZE, PACK(0, 1));   /* epilogue header */
-    heap_listp += (DSIZE);
+    listNode head = ((listNode)(heap_listp+WSIZE)); // pointer extra 8 bytes 1 DSIZE
+    head->next = NULL;
+    head->prev = NULL;
+    PUT(heap_listp+DSIZE+WSIZE, PACK(OVERHEAD, 1));  /* prologue header */ 
+    PUT(heap_listp+DSIZE+DSIZE, PACK(OVERHEAD, 1));  /* prologue footer */ 
+    PUT(heap_listp+DSIZE+DSIZE+WSIZE, PACK(0, 1));   /* epilogue header */
+    heap_listp += (DSIZE+DSIZE);
 
     /* Extend the empty heap with a free block of CHUNKSIZE bytes */
     if (extend_heap(CHUNKSIZE/WSIZE) == NULL) {
         return -1;
     }
-    freelist = NULL;
 
     return 0;
 }
@@ -390,20 +391,9 @@ static void place(void *bp, size_t asize)
  */
 static void *find_fit(size_t asize)
 {
-    if(freelist == NULL){
-        return NULL;
-    }
-    /* first fit search */
-    listNode bp;
 
-    for (bp = LISTHEAD->next; bp != NULL; bp = bp->next) {
-        if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp)))) {
-            return bp;
-        }
-    }
-    return NULL; /* no fit */
-    /* best fit search 
-    listNode bp = LISTHEAD;
+    /* best fit search */
+    listNode bp = LISTHEAD->next;
     listNode bestFit = NULL;
     size_t remainder = 9999999; // some huges number
         for (; bp != NULL; bp = bp->next) {
@@ -511,7 +501,9 @@ void addToList(void *bp){ //LIFO
         if(temp->next != NULL){
             temp->next->prev = newNode;
         }
+
     }
+
 /*
     listNode newNode = (listNode)bp;
     newNode->next = LISTHEAD->next;
@@ -520,9 +512,7 @@ void addToList(void *bp){ //LIFO
         LISTHEAD->next->prev = newNode;
     }
     LISTHEAD->next = newNode; */
-
 }
-
 /* 
  *this function removes the node that bp points to and connects the neighbor nodes to each other 
  */
@@ -538,7 +528,7 @@ void removeFromList(void *bp){ // LISTHEAD er alltaf fyrsta node
 
 static void freeListChecker() {
     listNode last = LISTHEAD, tmp;
-    for(tmp = LISTHEAD; tmp !=NULL; tmp = tmp->next, last = last->next) {
+    for(tmp = LISTHEAD->next; tmp !=NULL; tmp = tmp->next, last = last->next) {
         if(!(tmp->prev == last)) {
             printf("The first block is not correctly pointing to prev pointer of the second block\n");
             printblock(tmp);
