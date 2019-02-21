@@ -393,7 +393,16 @@ static void *find_fit(size_t asize)
     if(freelist == NULL){
         return NULL;
     }
-    /* best fit search */
+    /* first fit search */
+    listNode bp;
+
+    for (bp = LISTHEAD->next; bp != NULL; bp = bp->next) {
+        if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp)))) {
+            return bp;
+        }
+    }
+    return NULL; /* no fit */
+    /* best fit search 
     listNode bp = LISTHEAD;
     listNode bestFit = NULL;
     size_t remainder = 9999999; // some huges number
@@ -502,9 +511,7 @@ void addToList(void *bp){ //LIFO
         if(temp->next != NULL){
             temp->next->prev = newNode;
         }
-
     }
-
 /*
     listNode newNode = (listNode)bp;
     newNode->next = LISTHEAD->next;
@@ -513,7 +520,9 @@ void addToList(void *bp){ //LIFO
         LISTHEAD->next->prev = newNode;
     }
     LISTHEAD->next = newNode; */
+
 }
+
 /* 
  *this function removes the node that bp points to and connects the neighbor nodes to each other 
  */
