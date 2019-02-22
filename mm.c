@@ -130,6 +130,7 @@ static void *find_fit(size_t asize);
 static void *coalesce(void *bp);
 static void printblock(void *bp);
 static void checkblock(void *bp);
+static int checkCycleHareTort();
 
 /* 
  * mm_init - Initialize the memory manager 
@@ -310,6 +311,33 @@ void *mm_realloc(void *ptr, size_t size)
     return NULL; // hopfully we never end up here....
 }
 
+/*
+* checkCycleHareTort - Uses the Hare and Tortoise method to detect cycles
+*/
+
+static int checkCycleHareTort()
+{
+    //Hare and tort starting point
+    listNode tort, hare ;
+    tort = hare = LISTHEAD;
+
+    //get set.. go!
+    while(hare->next != NULL)
+    {
+        if(!(hare->next != NULL))
+        {
+            tort = tort->next; //One small step for tort
+            hare = hare->next->next;// One giant leap for harekind
+        }
+        if(tort == hare)
+        {
+            return 0; // a cycle has been found
+        }
+    }
+    return 1; // no cycle detected
+
+}
+
 /* 
  * mm_checkheap - Check the heap for consistency 
  */
@@ -341,6 +369,12 @@ void mm_checkheap(int verbose)
     { // prints epilog if verbose
         printblock(bp);
     }
+
+     if(checkCycleHareTort() == 0)
+    {
+        printf("A cycle has been found!\n");
+    }
+
     if ((GET_SIZE(HDRP(bp)) != 0) || !(GET_ALLOC(HDRP(bp))))
     {
         printf("Bad epilogue header\n"); // check the epilog is allocated zero bits
