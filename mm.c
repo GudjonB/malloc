@@ -449,8 +449,17 @@ static void place(void *bp, size_t asize)
  */
 static void *find_fit(size_t asize)
 {
+    /* first fit search */
+    listNode bp;
 
-    /* best fit search */
+    for (bp = LISTHEAD->next; bp != NULL; bp = bp->next) {
+        if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp)))) {
+            return bp;
+        }
+    }
+    return NULL; /* no fit */
+
+    /* best fit search 
     listNode bp = LISTHEAD->next;
     listNode bestFit = NULL;
     size_t remainder = 9999999; // some huges number
@@ -563,10 +572,10 @@ listNode temp = LISTHEAD,newNode = (listNode)bp;
         }
         newNode->prev = temp;
         newNode->next = temp->next;
-        temp->next = newNode;
         if(temp->next != NULL){
             temp->next->prev = newNode;
         }
+        temp->next = newNode;
 
      }
 
@@ -601,7 +610,7 @@ static void freeListChecker()
     {
         if (!(tmp->prev == last))
         { // check to see if the next block points to me as previous
-            printf("The first block is not correctly pointing to prev pointer of the second block\n");
+            printf("The first block is not correctly pointed to as the prev pointer of the second block\n");
             printblock(tmp);
             printblock(last);
         }
