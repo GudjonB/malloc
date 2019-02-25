@@ -436,7 +436,7 @@ static void *find_fit(size_t asize)
         {
             remainder = GET_SIZE(HDRP(bp)) - asize; // the remainder of the block that was not asked for
             bestFit = bp;
-            if (remainder <= 4000)
+            if (remainder <= 3904)
             {                   // when the remainder of the block is less then 3600 bits the block is considered goodenough
                 return bestFit; // the number 3600 is a multiple of 8 and was found through trial and error
             }
