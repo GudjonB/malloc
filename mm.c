@@ -339,37 +339,37 @@ static int checkCycleHareTort()
  */
 void mm_checkheap(int verbose)
 {
-    // char *bp = heap_listp;
+    char *bp = heap_listp;
 
-    // if (verbose)
-    // {
-    //     printf("Heap (%p):\n", heap_listp);
-    // }
+    if (verbose)
+    {
+        printf("Heap (%p):\n", heap_listp);
+    }
 
-    // if ((GET_SIZE(HDRP(heap_listp)) != DSIZE) || !GET_ALLOC(HDRP(heap_listp)))
-    // {
-    //     printf("Bad prologue header\n"); // check if the prolog is allocated and of size 8
-    // }
-    // checkblock(heap_listp); // check if the first block is correctly aligned and header and footer match
+    if ((GET_SIZE(HDRP(heap_listp)) != DSIZE) || !GET_ALLOC(HDRP(heap_listp)))
+    {
+        printf("Bad prologue header\n"); // check if the prolog is allocated and of size 8
+    }
+    checkblock(heap_listp); // check if the first block is correctly aligned and header and footer match
 
-    // for (bp = heap_listp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp))
-    // { // traverse the whole heap exept the epilog and
-    //     if (verbose)
-    //     {                   // make sure allocated size is always grater then zero
-    //         printblock(bp); // in verbose mode prints all blocks
-    //     }
-    //     checkblock(bp);
-    // }
+    for (bp = heap_listp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp))
+    { // traverse the whole heap exept the epilog and
+        if (verbose)
+        {                   // make sure allocated size is always grater then zero
+            printblock(bp); // in verbose mode prints all blocks
+        }
+        checkblock(bp);
+    }
 
-    // if (verbose)
-    // { // prints epilog if verbose
-    //     printblock(bp);
-    // }
+    if (verbose)
+    { // prints epilog if verbose
+        printblock(bp);
+    }
 
-    // if ((GET_SIZE(HDRP(bp)) != 0) || !(GET_ALLOC(HDRP(bp))))
-    // {
-    //     printf("Bad epilogue header\n"); // check the epilog is allocated zero bits
-    // }
+    if ((GET_SIZE(HDRP(bp)) != 0) || !(GET_ALLOC(HDRP(bp))))
+    {
+        printf("Bad epilogue header\n"); // check the epilog is allocated zero bits
+    }
     if (verbose)
     {
         printf("Checking for errors in the free list\n");
