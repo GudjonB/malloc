@@ -563,10 +563,10 @@ listNode temp = LISTHEAD,newNode = (listNode)bp;
         }
         newNode->prev = temp;
         newNode->next = temp->next;
-        temp->next = newNode;
         if(temp->next != NULL){
             temp->next->prev = newNode;
         }
+        temp->next = newNode;
 
      }
 
@@ -601,7 +601,7 @@ static void freeListChecker()
     {
         if (!(tmp->prev == last))
         { // check to see if the next block points to me as previous
-            printf("The first block is not correctly pointing to prev pointer of the second block\n");
+            printf("The first block is not correctly pointed to as the prev pointer of the second block\n");
             printblock(tmp);
             printblock(last);
         }
