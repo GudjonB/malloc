@@ -322,15 +322,10 @@ static int checkCycleHareTort()
     tort = hare = LISTHEAD;
 
     //get set.. go!
-    while(hare->next != NULL)
-    {
-        if(!(hare->next != NULL))
-        {
-            tort = tort->next; //One small step for tort
-            hare = hare->next->next;// One giant leap for harekind
-        }
-        if(tort == hare)
-        {
+    while(hare->next != NULL){
+        tort = tort->next; //One small step for tort
+        hare = hare->next->next;// One giant leap for harekind
+        if(tort == hare){
             return 1; // a cycle has been found
         }
     }
