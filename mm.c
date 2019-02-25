@@ -331,10 +331,10 @@ static int checkCycleHareTort()
         }
         if(tort == hare)
         {
-            return 0; // a cycle has been found
+            return 1; // a cycle has been found
         }
     }
-    return 1; // no cycle detected
+    return 0; // no cycle detected
 
 }
 
@@ -370,11 +370,6 @@ void mm_checkheap(int verbose)
         printblock(bp);
     }
 
-     if(checkCycleHareTort() == 0)
-    {
-        printf("A cycle has been found!\n");
-    }
-
     if ((GET_SIZE(HDRP(bp)) != 0) || !(GET_ALLOC(HDRP(bp))))
     {
         printf("Bad epilogue header\n"); // check the epilog is allocated zero bits
@@ -382,6 +377,10 @@ void mm_checkheap(int verbose)
     if (verbose)
     {
         printf("Checking for errors in the free list\n");
+    }
+    if(checkCycleHareTort())
+    {
+        printf("A cycle has been found!\n");
     }
     freeListChecker(); // check if the pointers in the free list are pointing correctly to each other
     if (verbose)
