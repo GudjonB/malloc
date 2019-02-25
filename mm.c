@@ -63,12 +63,11 @@ team_t team = {
  */
 /* printf("%s\n, __func__"); seen in the malloc lecture from Freysteinn, lets us know which function we are currently checking */
 
-#define DEBUG                  /* Comment this out when not debugging! */
+//#define DEBUG                  /* Comment this out when not debugging! */
 #ifdef DEBUG /* If and only if the DEBUG flag is set we go here */
 #define CHECKHEAP(verbose)    \
     printf("%s\n", __func__); \
     mm_checkheap(verbose);
-
 #else /* else we ignore its call with this else statement */
 #define CHECKHEAP(verbose) ;
 #endif
@@ -323,14 +322,19 @@ static int checkCycleHareTort()
     tort = hare = LISTHEAD;
 
     //get set.. go!
-    while(hare->next != NULL){
-        tort = tort->next; //One small step for tort
-        hare = hare->next->next;// One giant leap for harekind
-        if(tort == hare){
-            return 1; // a cycle has been found
+    while(hare->next != NULL)
+    {
+        if(!(hare->next != NULL))
+        {
+            tort = tort->next; //One small step for tort
+            hare = hare->next->next;// One giant leap for harekind
+        }
+        if(tort == hare)
+        {
+            return 0; // a cycle has been found
         }
     }
-    return 0; // no cycle detected
+    return 1; // no cycle detected
 
 }
 
@@ -366,6 +370,11 @@ void mm_checkheap(int verbose)
         printblock(bp);
     }
 
+     if(checkCycleHareTort() == 0)
+    {
+        printf("A cycle has been found!\n");
+    }
+
     if ((GET_SIZE(HDRP(bp)) != 0) || !(GET_ALLOC(HDRP(bp))))
     {
         printf("Bad epilogue header\n"); // check the epilog is allocated zero bits
@@ -373,10 +382,6 @@ void mm_checkheap(int verbose)
     if (verbose)
     {
         printf("Checking for errors in the free list\n");
-    }
-    if(checkCycleHareTort())
-    {
-        printf("A cycle has been found!\n");
     }
     freeListChecker(); // check if the pointers in the free list are pointing correctly to each other
     if (verbose)
@@ -464,7 +469,7 @@ static void *find_fit(size_t asize)
         {
             remainder = GET_SIZE(HDRP(bp)) - asize; // the remainder of the block that was not asked for
             bestFit = bp;
-            if (remainder <= 4000)
+            if (remainder <= 3900)
             {                   // when the remainder of the block is less then 3600 bits the block is considered goodenough
                 return bestFit; // the number 3600 is a multiple of 8 and was found through trial and error
             }
