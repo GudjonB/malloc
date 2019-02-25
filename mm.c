@@ -63,11 +63,12 @@ team_t team = {
  */
 /* printf("%s\n, __func__"); seen in the malloc lecture from Freysteinn, lets us know which function we are currently checking */
 
-//#define DEBUG                  /* Comment this out when not debugging! */
+#define DEBUG                  /* Comment this out when not debugging! */
 #ifdef DEBUG /* If and only if the DEBUG flag is set we go here */
 #define CHECKHEAP(verbose)    \
     printf("%s\n", __func__); \
     mm_checkheap(verbose);
+
 #else /* else we ignore its call with this else statement */
 #define CHECKHEAP(verbose) ;
 #endif
@@ -315,28 +316,23 @@ void *mm_realloc(void *ptr, size_t size)
 * checkCycleHareTort - Uses the Hare and Tortoise method to detect cycles
 */
 
-static int checkCycleHareTort()
-{
-    //Hare and tort starting point
-    listNode tort, hare ;
-    tort = hare = LISTHEAD;
+// static int checkCycleHareTort()
+// {
+//     //Hare and tort starting point
+//     listNode tort, hare ;
+//     tort = hare = LISTHEAD;
 
-    //get set.. go!
-    while(hare->next != NULL)
-    {
-        if(!(hare->next != NULL))
-        {
-            tort = tort->next; //One small step for tort
-            hare = hare->next->next;// One giant leap for harekind
-        }
-        if(tort == hare)
-        {
-            return 0; // a cycle has been found
-        }
-    }
-    return 1; // no cycle detected
+//     //get set.. go!
+//     while(hare->next != NULL){
+//         tort = tort->next; //One small step for tort
+//         hare = hare->next->next;// One giant leap for harekind
+//         if(tort == hare){
+//             return 1; // a cycle has been found
+//         }
+//     }
+//     return 0; // no cycle detected
 
-}
+// }
 
 /* 
  * mm_checkheap - Check the heap for consistency 
@@ -368,11 +364,6 @@ void mm_checkheap(int verbose)
     if (verbose)
     { // prints epilog if verbose
         printblock(bp);
-    }
-
-     if(checkCycleHareTort() == 0)
-    {
-        printf("A cycle has been found!\n");
     }
 
     if ((GET_SIZE(HDRP(bp)) != 0) || !(GET_ALLOC(HDRP(bp))))
@@ -469,7 +460,7 @@ static void *find_fit(size_t asize)
         {
             remainder = GET_SIZE(HDRP(bp)) - asize; // the remainder of the block that was not asked for
             bestFit = bp;
-            if (remainder <= 3900)
+            if (remainder <= 4000)
             {                   // when the remainder of the block is less then 3600 bits the block is considered goodenough
                 return bestFit; // the number 3600 is a multiple of 8 and was found through trial and error
             }
@@ -559,14 +550,34 @@ static void checkblock(void *bp)
 void addToList(void *bp)
 { //LIFO
 
-    listNode newNode = (listNode)bp;
-    newNode->next = LISTHEAD->next;
-    newNode->prev = LISTHEAD;
-    if (LISTHEAD->next != NULL)
-    {
-        LISTHEAD->next->prev = newNode;
+listNode temp = LISTHEAD,newNode = (listNode)bp;
+    size_t newSize = GET_SIZE(HDRP(bp));
+    if(temp->next == NULL){
+        LISTHEAD ->next = newNode;
+        newNode->next = NULL;
+        newNode->prev = LISTHEAD;
     }
-    LISTHEAD->next = newNode;
+    else{
+        while(temp->next != NULL && (GET_SIZE(HDRP(temp->next)) < newSize)){
+            temp = temp->next;
+        }
+        newNode->prev = temp;
+        newNode->next = temp->next;
+        temp->next = newNode;
+        if(temp->next != NULL){
+            temp->next->prev = newNode;
+        }
+
+     }
+
+    // listNode newNode = (listNode)bp;
+    // newNode->next = LISTHEAD->next;
+    // newNode->prev = LISTHEAD;
+    // if (LISTHEAD->next != NULL)
+    // {
+    //     LISTHEAD->next->prev = newNode;
+    // }
+    // LISTHEAD->next = newNode;
 }
 /* 
  *this function removes the node that bp points to and connects the neighbor nodes to each other 
