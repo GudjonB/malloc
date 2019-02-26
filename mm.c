@@ -131,7 +131,6 @@ static void *find_fit(size_t asize);
 static void *coalesce(void *bp);
 static void printblock(void *bp);
 static void checkblock(void *bp);
-static int checkCycleHareTort();
 
 /* 
  * mm_init - Initialize the memory manager 
@@ -312,28 +311,6 @@ void *mm_realloc(void *ptr, size_t size)
     return NULL; // hopfully we never end up here....
 }
 
-/*
-* checkCycleHareTort - Uses the Hare and Tortoise method to detect cycles
-*/
-
-// static int checkCycleHareTort()
-// {
-//     //Hare and tort starting point
-//     listNode tort, hare ;
-//     tort = hare = LISTHEAD;
-
-//     //get set.. go!
-//     while(hare->next != NULL){
-//         tort = tort->next; //One small step for tort
-//         hare = hare->next->next;// One giant leap for harekind
-//         if(tort == hare){
-//             return 1; // a cycle has been found
-//         }
-//     }
-//     return 0; // no cycle detected
-
-// }
-
 /* 
  * mm_checkheap - Check the heap for consistency 
  */
@@ -449,17 +426,7 @@ static void place(void *bp, size_t asize)
  */
 static void *find_fit(size_t asize)
 {
-    /* first fit search */
-    listNode bp;
-
-    for (bp = LISTHEAD->next; bp != NULL; bp = bp->next) {
-        if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp)))) {
-            return bp;
-        }
-    }
-    return NULL; /* no fit */
-
-    /* best fit search 
+    /* best fit search */
     listNode bp = LISTHEAD->next;
     listNode bestFit = NULL;
     size_t remainder = 9999999; // some huges number
@@ -469,13 +436,12 @@ static void *find_fit(size_t asize)
         {
             remainder = GET_SIZE(HDRP(bp)) - asize; // the remainder of the block that was not asked for
             bestFit = bp;
-            if (remainder <= 4000)
+            if (remainder <= 3904)
             {                   // when the remainder of the block is less then 3600 bits the block is considered goodenough
                 return bestFit; // the number 3600 is a multiple of 8 and was found through trial and error
             }
         }
     }
-    // }
     return bestFit; /*if still NULL = no fit */ // if we got to this point then either a block with a higher remainder is used, or a block was not found :(
 }
 
@@ -559,34 +525,34 @@ static void checkblock(void *bp)
 void addToList(void *bp)
 { //LIFO
 
-listNode temp = LISTHEAD,newNode = (listNode)bp;
-    size_t newSize = GET_SIZE(HDRP(bp));
-    if(temp->next == NULL){
-        LISTHEAD ->next = newNode;
-        newNode->next = NULL;
-        newNode->prev = LISTHEAD;
+// listNode temp = LISTHEAD,newNode = (listNode)bp;
+//     size_t newSize = GET_SIZE(HDRP(bp));
+//     if(temp->next == NULL){
+//         LISTHEAD ->next = newNode;
+//         newNode->next = NULL;
+//         newNode->prev = LISTHEAD;
+//     }
+//     else{
+//         while(temp->next != NULL && (GET_SIZE(HDRP(temp->next)) < newSize)){
+//             temp = temp->next;
+//         }
+//         newNode->prev = temp;
+//         newNode->next = temp->next;
+//         if(temp->next != NULL){
+//             temp->next->prev = newNode;
+//         }
+//         temp->next = newNode;
+
+//      }
+
+    listNode newNode = (listNode)bp;
+    newNode->next = LISTHEAD->next;
+    newNode->prev = LISTHEAD;
+    if (LISTHEAD->next != NULL)
+    {
+        LISTHEAD->next->prev = newNode;
     }
-    else{
-        while(temp->next != NULL && (GET_SIZE(HDRP(temp->next)) < newSize)){
-            temp = temp->next;
-        }
-        newNode->prev = temp;
-        newNode->next = temp->next;
-        if(temp->next != NULL){
-            temp->next->prev = newNode;
-        }
-        temp->next = newNode;
-
-     }
-
-    // listNode newNode = (listNode)bp;
-    // newNode->next = LISTHEAD->next;
-    // newNode->prev = LISTHEAD;
-    // if (LISTHEAD->next != NULL)
-    // {
-    //     LISTHEAD->next->prev = newNode;
-    // }
-    // LISTHEAD->next = newNode;
+    LISTHEAD->next = newNode;
 }
 /* 
  *this function removes the node that bp points to and connects the neighbor nodes to each other 
