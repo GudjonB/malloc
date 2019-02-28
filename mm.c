@@ -63,7 +63,7 @@ team_t team = {
  */
 /* printf("%s\n, __func__"); seen in the malloc lecture from Freysteinn, lets us know which function we are currently checking */
 
-//#define DEBUG                  /* Comment this out when not debugging! */
+/*#define DEBUG */                  /* Comment this out when not debugging! */
 #ifdef DEBUG /* If and only if the DEBUG flag is set we go here */
 #define CHECKHEAP(verbose)    \
     printf("%s\n", __func__); \
@@ -144,7 +144,7 @@ int mm_init(void)
         return -1;
     }
     PUT(heap_listp, 0);                               /* alignment padding */
-    listNode head = ((listNode)(heap_listp + WSIZE)); // pointer extra 8 bytes 1 DSIZE
+    listNode head = ((listNode)(heap_listp + WSIZE)); /* pointer extra 8 bytes 1 DSIZE */
     head->next = NULL;
     head->prev = NULL;
     PUT(heap_listp + DSIZE + WSIZE, PACK(OVERHEAD, 1));  /* prologue header */
@@ -228,73 +228,73 @@ void mm_free(void *bp)
 void *mm_realloc(void *ptr, size_t size)
 {
     if (size == 0)
-    { // asked for 0 space, pointer freed
+    { /* asked for 0 space, pointer freed */
         mm_free(ptr);
         return NULL;
     }
     if (ptr == NULL)
-    { // asked for new malloc
+    { /* asked for new malloc */
         ptr = mm_malloc(size);
         return ptr;
     }
 
     void *newp;
     size_t copySize, newBlock;
-    size_t newSize = ALIGN(size); // size aligned + overhead
+    size_t newSize = ALIGN(size); /* size aligned + overhead */
     size_t prev_alloc = GET_ALLOC(FTRP(PREV_BLKP(ptr)));
     size_t next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(ptr)));
 
     copySize = GET_SIZE(HDRP(ptr));
     if (newSize <= copySize)
-    { // asked to allocate the same amount of space
+    { /* asked to allocate the same amount of space */
         return ptr;
     }
-    // at first we implamented this and the following if loops to behave sortof like the function place,
-    // So it would segment the blocks if thay were bigger then needed, but after many tries this gave us the best score
+    /* at first we implamented this and the following if loops to behave sortof like the function place, */
+    /* So it would segment the blocks if thay were bigger then needed, but after many tries this gave us the best score */
 
     else if (!prev_alloc)
-    { // if the block on the left is not allocated, we try to fit the new allocation in to them conbined
+    { /* if the block on the left is not allocated, we try to fit the new allocation in to them conbined */
         newBlock = (copySize + GET_SIZE(HDRP(PREV_BLKP(ptr))));
         if (newBlock >= newSize)
         {
-            newp = PREV_BLKP(ptr);              // for readability
-            removeFromList(newp);               // remove the block on the left from the free list.
-            PUT(HDRP(newp), PACK(newBlock, 1)); // change the header of the block on the left
-            // memcpy(newp, ptr, newSize);
-            memmove(newp, ptr, newSize);        // copy the contents of the oldblock in to the one on the left
-            PUT(FTRP(newp), PACK(newBlock, 1)); // change the footer to match the header
-            return newp;                        // return a pointer to the new blocks
+            newp = PREV_BLKP(ptr);              /* for readability */
+            removeFromList(newp);               /* remove the block on the left from the free list. */
+            PUT(HDRP(newp), PACK(newBlock, 1)); /* change the header of the block on the left */
+            /* memcpy(newp, ptr, newSize); */
+            memmove(newp, ptr, newSize);        /* copy the contents of the oldblock in to the one on the left */
+            PUT(FTRP(newp), PACK(newBlock, 1)); /* change the footer to match the header */
+            return newp;                        /* return a pointer to the new blocks */
         }
     }
     else if (!next_alloc)
-    { // if the block on the right is not allocated, we try to fit the new allocation in to them conbined
+    { /* if the block on the right is not allocated, we try to fit the new allocation in to them conbined */
         newBlock = (copySize + GET_SIZE(FTRP(NEXT_BLKP(ptr))));
         if (newBlock >= newSize)
         {
-            removeFromList(NEXT_BLKP(ptr));    // if the newblock fits then we just change the header since the data is already the first thing
-            PUT(HDRP(ptr), PACK(newBlock, 1)); // after the header
+            removeFromList(NEXT_BLKP(ptr));    /* if the newblock fits then we just change the header since the data is already the first thing */
+            PUT(HDRP(ptr), PACK(newBlock, 1)); /* after the header */
             PUT(FTRP(ptr), PACK(newBlock, 1));
-            return ptr; // return the old pointer but with new header and footer
+            return ptr; /* return the old pointer but with new header and footer */
         }
     }
     else if (!prev_alloc && !next_alloc)
-    {                                                                                            // if both neighboring blocks are unallocated and the new block didn't fit in to just the left or right conbined with the old block
-        newBlock = (copySize + GET_SIZE(FTRP(NEXT_BLKP(ptr))) + GET_SIZE(FTRP(PREV_BLKP(ptr)))); // then we check if it fits in all three conbined
+    {                                                                                            /* if both neighboring blocks are unallocated and the new block didn't fit in to just the left or right conbined with the old block */
+        newBlock = (copySize + GET_SIZE(FTRP(NEXT_BLKP(ptr))) + GET_SIZE(FTRP(PREV_BLKP(ptr)))); /* then we check if it fits in all three conbined*/
         if (newBlock >= newSize)
         {
             newp = PREV_BLKP(ptr);
-            removeFromList(newp);               // remove block on the left
-            removeFromList(NEXT_BLKP(ptr));     // remove bblock on the right
-            PUT(HDRP(newp), PACK(newBlock, 1)); // change the header of the new block, size of all three and allocated
-            //memcpy(newp, ptr, copySize);
-            memmove(newp, ptr, copySize);       // copy contents of the old block
-            PUT(FTRP(newp), PACK(newBlock, 1)); // change the footer to match header
+            removeFromList(newp);               /* remove block on the left */
+            removeFromList(NEXT_BLKP(ptr));     /* remove bblock on the right */
+            PUT(HDRP(newp), PACK(newBlock, 1)); /* change the header of the new block, size of all three and allocated */
+            /* memcpy(newp, ptr, copySize); */
+            memmove(newp, ptr, copySize);       /* copy contents of the old block */
+            PUT(FTRP(newp), PACK(newBlock, 1)); /* change the footer to match header */
             return newp;
         }
     }
     else
-    {                           // at this point in the code the new block didn't fit in to any conbination
-        newp = mm_malloc(size); // mallock is called
+    {                           /* at this point in the code the new block didn't fit in to any conbination */
+        newp = mm_malloc(size); /* mallock is called */
         if (newp == NULL)
         {
             printf("ERROR: mm_malloc failed in mm_realloc\n");
@@ -302,13 +302,13 @@ void *mm_realloc(void *ptr, size_t size)
         }
         else
         {
-            //memcpy(newp, ptr, size);
-            memmove(newp, ptr, size); // contents copyed over
-            mm_free(ptr);             // the old block is freed
-            return newp;              // pointer to new block returned
+            /* memcpy(newp, ptr, size); */
+            memmove(newp, ptr, size); /* contents copyed over */
+            mm_free(ptr);             /* the old block is freed */
+            return newp;              /* pointer to new block returned */
         }
     }
-    return NULL; // hopfully we never end up here....
+    return NULL; /* hopfully we never end up here.... */
 }
 
 /* 
@@ -325,35 +325,35 @@ void mm_checkheap(int verbose)
 
     if ((GET_SIZE(HDRP(heap_listp)) != DSIZE) || !GET_ALLOC(HDRP(heap_listp)))
     {
-        printf("Bad prologue header\n"); // check if the prolog is allocated and of size 8
+        printf("Bad prologue header\n"); /* check if the prolog is allocated and of size 8 */
     }
-    checkblock(heap_listp); // check if the first block is correctly aligned and header and footer match
+    checkblock(heap_listp); /* check if the first block is correctly aligned and header and footer match */
 
     for (bp = heap_listp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp))
-    { // traverse the whole heap exept the epilog and
+    { /* traverse the whole heap exept the epilog and */
         if (verbose)
-        {                   // make sure allocated size is always grater then zero
-            printblock(bp); // in verbose mode prints all blocks
+        {                   /* make sure allocated size is always grater then zero */
+            printblock(bp); /* in verbose mode prints all blocks */
         }
         checkblock(bp);
     }
 
     if (verbose)
-    { // prints epilog if verbose
+    { /* prints epilog if verbose */
         printblock(bp);
     }
 
     if ((GET_SIZE(HDRP(bp)) != 0) || !(GET_ALLOC(HDRP(bp))))
     {
-        printf("Bad epilogue header\n"); // check the epilog is allocated zero bits
+        printf("Bad epilogue header\n"); /* check the epilog is allocated zero bits */
     }
     if (verbose)
     {
         printf("Checking for errors in the free list\n");
     }
-    freeListChecker(); // check if the pointers in the free list are pointing correctly to each other
+    freeListChecker(); /* check if the pointers in the free list are pointing correctly to each other */
     if (verbose)
-    { // and are not allocated
+    { /* and are not allocated */
         printf("All checks of the free list have finished!\n");
     }
 }
@@ -383,7 +383,7 @@ static void *extend_heap(size_t words)
 
     /* Coalesce if the previous block was free */
     addToList(bp);
-    //coalesce(bp);
+    /*coalesce(bp); */
     return coalesce(bp);
 }
 /* $end mmextendheap */
@@ -429,20 +429,21 @@ static void *find_fit(size_t asize)
     /* best fit search */
     listNode bp = LISTHEAD->next;
     listNode bestFit = NULL;
-    size_t remainder = 9999999; // some huges number
+    size_t remainder = 9999999; /* some huges number */
     for (; bp != NULL; bp = bp->next)
     {
         if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp))) && (GET_SIZE(HDRP(bp)) - asize) < remainder)
         {
-            remainder = GET_SIZE(HDRP(bp)) - asize; // the remainder of the block that was not asked for
+            remainder = GET_SIZE(HDRP(bp)) - asize; /* the remainder of the block that was not asked for */
             bestFit = bp;
             if (remainder <= 3904)
-            {                   // when the remainder of the block is less then 3600 bits the block is considered goodenough
-                return bestFit; // the number 3600 is a multiple of 8 and was found through trial and error
+            {                   /* when the remainder of the block is less then 3600 bits the block is considered goodenough */
+                return bestFit; /* the number 3600 is a multiple of 8 and was found through trial and error */
             }
         }
     }
-    return bestFit; /*if still NULL = no fit */ // if we got to this point then either a block with a higher remainder is used, or a block was not found :(
+    return bestFit; /* if still NULL = no fit */ 
+                    /* if we got to this point then either a block with a higher remainder is used, or a block was not found :( */
 }
 
 /*
@@ -497,7 +498,7 @@ static void printblock(void *bp)
     falloc = GET_ALLOC(FTRP(bp));
 
     if (hsize == 0)
-    { // if size = 0 , then it's the epilog or something is wrong
+    { /* if size = 0 , then it's the epilog or something is wrong */
         printf("%p: EOL\n", bp);
         return;
     }
@@ -510,11 +511,11 @@ static void printblock(void *bp)
 static void checkblock(void *bp)
 {
     if ((size_t)bp % 8)
-    { // see if the block is aligned
+    { /* see if the block is aligned */
         printf("Error: %p is not doubleword aligned\n", bp);
     }
     if (GET(HDRP(bp)) != GET(FTRP(bp)))
-    { // check if the headers and footer match
+    { /* check if the headers and footer match */
         printf("Error: header does not match footer\n");
     }
 }
@@ -523,28 +524,7 @@ static void checkblock(void *bp)
  *this function inserts the new freeListNodes at the top of the list  
  */
 void addToList(void *bp)
-{ //LIFO
-
-// listNode temp = LISTHEAD,newNode = (listNode)bp;
-//     size_t newSize = GET_SIZE(HDRP(bp));
-//     if(temp->next == NULL){
-//         LISTHEAD ->next = newNode;
-//         newNode->next = NULL;
-//         newNode->prev = LISTHEAD;
-//     }
-//     else{
-//         while(temp->next != NULL && (GET_SIZE(HDRP(temp->next)) < newSize)){
-//             temp = temp->next;
-//         }
-//         newNode->prev = temp;
-//         newNode->next = temp->next;
-//         if(temp->next != NULL){
-//             temp->next->prev = newNode;
-//         }
-//         temp->next = newNode;
-
-//      }
-
+{ /* LIFO */
     listNode newNode = (listNode)bp;
     newNode->next = LISTHEAD->next;
     newNode->prev = LISTHEAD;
@@ -558,7 +538,7 @@ void addToList(void *bp)
  *this function removes the node that bp points to and connects the neighbor nodes to each other 
  */
 void removeFromList(void *bp)
-{ // LISTHEAD er alltaf fyrsta node
+{ /* LISTHEAD er alltaf fyrsta node */
     listNode nodeToDelete = (listNode)bp;
     if (nodeToDelete->next != NULL)
     {
@@ -575,13 +555,13 @@ static void freeListChecker()
     for (tmp = LISTHEAD->next; tmp != NULL; tmp = tmp->next, last = last->next)
     {
         if (!(tmp->prev == last))
-        { // check to see if the next block points to me as previous
+        { /* check to see if the next block points to me as previous */
             printf("The first block is not correctly pointed to as the prev pointer of the second block\n");
             printblock(tmp);
             printblock(last);
         }
         if (GET_ALLOC(HDRP(tmp)))
-        { // make sure no allocated blocks are in the free list
+        { /* make sure no allocated blocks are in the free list */
             printf("Allocated block in free list!!\n");
         }
     }
