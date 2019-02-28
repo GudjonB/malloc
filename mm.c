@@ -399,9 +399,9 @@ static void place(void *bp, size_t asize)
 {
     size_t csize = GET_SIZE(HDRP(bp));
 
-    if ((csize - asize) >= (DSIZE + OVERHEAD))      /* if the block left over has enough space for a new block*/
-    {                                               /* we split the block and add the newblock to the freelist*/
-        PUT(HDRP(bp), PACK(asize, 1));
+    if ((csize - asize) >= (18*DSIZE + OVERHEAD))      /* if the block left over has enough space for a new block*/
+    {                                                  /* to minimize fragmentation we changed the minimum size of a split block */
+        PUT(HDRP(bp), PACK(asize, 1));               /* we split the block and add the newblock to the freelist*/
         PUT(FTRP(bp), PACK(asize, 1));
         removeFromList(bp);                         /* the assigned block is removed*/
         PUT(HDRP(NEXT_BLKP(bp)), PACK(csize - asize, 0)); /* header and footer size of the new block set as the remainder*/
