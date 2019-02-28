@@ -275,7 +275,7 @@ void *mm_realloc(void *ptr, size_t size)
             newp = PREV_BLKP(ptr);              /* for readability */
             removeFromList(newp);               /* remove the block on the left from the free list. */
             PUT(HDRP(newp), PACK(newBlock, 1)); /* change the header of the block on the left */
-            /* memcpy(newp, ptr, newSize); */
+            /* memcpy(newp, ptr, newSize); */   /* we'll do memmove instead for better valgrind outputs */
             memmove(newp, ptr, newSize);        /* copy the contents of the oldblock in to the one on the left */
             PUT(FTRP(newp), PACK(newBlock, 1)); /* change the footer to match the header */
             return newp;                        /* return a pointer to the new blocks */
@@ -301,7 +301,7 @@ void *mm_realloc(void *ptr, size_t size)
             removeFromList(newp);               /* remove block on the left */
             removeFromList(NEXT_BLKP(ptr));     /* remove bblock on the right */
             PUT(HDRP(newp), PACK(newBlock, 1)); /* change the header of the new block, size of all three and allocated */
-            /* memcpy(newp, ptr, copySize); */
+            /* memcpy(newp, ptr, copySize); */  /* we'll do memmove instead for better valgrind outputs */
             memmove(newp, ptr, copySize);       /* copy contents of the old block */
             PUT(FTRP(newp), PACK(newBlock, 1)); /* change the footer to match header */
             return newp;
@@ -317,7 +317,7 @@ void *mm_realloc(void *ptr, size_t size)
         }
         else
         {
-            /* memcpy(newp, ptr, size); */
+            /* memcpy(newp, ptr, size); */ /* we'll do memmove instead for better valgrind outputs */
             memmove(newp, ptr, size); /* contents copyed over */
             mm_free(ptr);             /* the old block is freed */
             return newp;              /* pointer to new block returned */
