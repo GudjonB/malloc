@@ -63,7 +63,7 @@ team_t team = {
  */
 /* printf("%s\n, __func__"); seen in the malloc lecture from Freysteinn, lets us know which function we are currently checking */
 
-#define DEBUG                  /* Comment this out when not debugging! */
+//#define DEBUG                  /* Comment this out when not debugging! */
 #ifdef DEBUG /* If and only if the DEBUG flag is set we go here */
 #define CHECKHEAP(verbose)    \
     printf("%s\n", __func__); \
@@ -253,7 +253,7 @@ void *mm_realloc(void *ptr, size_t size)
     // So it would segment the blocks if thay were bigger then needed, but after many tries this gave us the best score
 
     else if (!prev_alloc)
-    { // if the block on the left is not allocated, we try to fit the new allocation in to them conbined
+    { // if the block on the left is not allocated, we try to fit the new allocation in to them combined
         newBlock = (copySize + GET_SIZE(HDRP(PREV_BLKP(ptr))));
         if (newBlock >= newSize)
         {
@@ -278,7 +278,7 @@ void *mm_realloc(void *ptr, size_t size)
         }
     }
     else if (!prev_alloc && !next_alloc)
-    {                                                                                            // if both neighboring blocks are unallocated and the new block didn't fit in to just the left or right conbined with the old block
+    {                                                                                            // if both neighboring blocks are unallocated and the new block didn't fit in to just the left or right combined with the old block
         newBlock = (copySize + GET_SIZE(FTRP(NEXT_BLKP(ptr))) + GET_SIZE(FTRP(PREV_BLKP(ptr)))); // then we check if it fits in all three conbined
         if (newBlock >= newSize)
         {
@@ -437,8 +437,8 @@ static void *find_fit(size_t asize)
             remainder = GET_SIZE(HDRP(bp)) - asize; // the remainder of the block that was not asked for
             bestFit = bp;
             if (remainder <= 3904)
-            {                   // when the remainder of the block is less then 3600 bits the block is considered goodenough
-                return bestFit; // the number 3600 is a multiple of 8 and was found through trial and error
+            {                   // when the remainder of the block is less then 3904 bits the block is considered goodenough
+                return bestFit; // the number 3904 is divisable by 8 and then 4 and was found through trial and error
             }
         }
     }
@@ -450,23 +450,23 @@ static void *find_fit(size_t asize)
  */
 static void *coalesce(void *bp)
 {
-    size_t prev_alloc = GET_ALLOC(FTRP(PREV_BLKP(bp)));
+    size_t prev_alloc = GET_ALLOC(FTRP(PREV_BLKP(bp))); 
     size_t next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(bp)));
     size_t size = GET_SIZE(HDRP(bp));
 
-    if (prev_alloc && next_alloc)
+    if (prev_alloc && next_alloc)                   /* if both neighbor blocks are allocated, then we have nothing to coalesce*/
     { /* Case 1 */
         return bp;
     }
-    else if (prev_alloc && !next_alloc)
+    else if (prev_alloc && !next_alloc)            /* if the block on the right is not allocated but the one on the left is, we merge with the one on the right*/
     { /* Case 2 */
-        removeFromList(NEXT_BLKP(bp));
+        removeFromList(NEXT_BLKP(bp));		   /* this means we move the footer and then update the size of both footer and headr*/
         size += GET_SIZE(HDRP(NEXT_BLKP(bp)));
         PUT(HDRP(bp), PACK(size, 0));
         PUT(FTRP(bp), PACK(size, 0));
     }
-    else if (!prev_alloc && next_alloc)
-    { /* Case 3 */
+    else if (!prev_alloc && next_alloc)            /* if the one on the left is not allocated but the one on he right is, we do the same only we move the header and then change the sizes*/
+    { /* Case 3 */				   /* here we need to remove the currant block from the free list since the previous block has the header
         removeFromList(bp);
         size += GET_SIZE(HDRP(PREV_BLKP(bp)));
         PUT(FTRP(bp), PACK(size, 0));
@@ -474,9 +474,9 @@ static void *coalesce(void *bp)
         bp = PREV_BLKP(bp);
     }
     else
-    { /* Case 4 */
-        removeFromList(NEXT_BLKP(bp));
-        removeFromList(bp);
+    { /* Case 4 */                               /* in the last case both blocks are unallocated and we need to change the header of the block on the right*/
+        removeFromList(NEXT_BLKP(bp));           /* and the footer of the block on the left, the middle part is then just garbage that we ignore*/
+        removeFromList(bp);			 /* we remove the current and the next block from the free list since the new header is on the previus block*/
         size += GET_SIZE(HDRP(PREV_BLKP(bp))) +
                 GET_SIZE(FTRP(NEXT_BLKP(bp)));
         PUT(HDRP(PREV_BLKP(bp)), PACK(size, 0));
