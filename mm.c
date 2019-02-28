@@ -14,8 +14,8 @@
  * where s are the meaningful size bits and a/f is set 
  * iff the block is allocated. The list has the following form:
  *
- * begin                                                          end
- * heap                                                           heap  
+ * begin                                                                       end
+ * heap                                                                        heap  
  *  ------------------------------------------------------------------------------   
  * |  pad   |   LISTHEAD | hdr(8:a) | ftr(8:a) | zero or more usr blks | hdr(8:a) |
  *  ------------------------------------------------------------------------------
