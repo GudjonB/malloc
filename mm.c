@@ -399,20 +399,20 @@ static void place(void *bp, size_t asize)
 {
     size_t csize = GET_SIZE(HDRP(bp));
 
-    if ((csize - asize) >= (DSIZE + OVERHEAD))
-    {
+    if ((csize - asize) >= (DSIZE + OVERHEAD))      /* if the block left over has enough space for a new block*/
+    {                                               /* we split the block and add the newblock to the freelist*/
         PUT(HDRP(bp), PACK(asize, 1));
         PUT(FTRP(bp), PACK(asize, 1));
-        removeFromList(bp);
-        PUT(HDRP(NEXT_BLKP(bp)), PACK(csize - asize, 0));
+        removeFromList(bp);                         /* the assigned block is removed*/
+        PUT(HDRP(NEXT_BLKP(bp)), PACK(csize - asize, 0)); /* header and footer size of the new block set as the remainder*/
         PUT(FTRP(NEXT_BLKP(bp)), PACK(csize - asize, 0));
 
-        addToList(NEXT_BLKP(bp));
+        addToList(NEXT_BLKP(bp));                   /* new block added*/
         coalesce(NEXT_BLKP(bp));
     }
     else
     {
-        PUT(HDRP(bp), PACK(csize, 1));
+        PUT(HDRP(bp), PACK(csize, 1));              /* if this code is executed then the block wasn't big enough to be split*/
         PUT(FTRP(bp), PACK(csize, 1));
         removeFromList(bp);
     }
@@ -455,19 +455,19 @@ static void *coalesce(void *bp)
     size_t next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(bp)));
     size_t size = GET_SIZE(HDRP(bp));
 
-    if (prev_alloc && next_alloc)
-    { /* Case 1 */
+    if (prev_alloc && next_alloc)           /* if both neighbor blocks are allocated we have nothing to coalesce */
+    { /* Case 1 */                          /* and the pointer is returned unchaged*/
         return bp;
     }
-    else if (prev_alloc && !next_alloc)
-    { /* Case 2 */
-        removeFromList(NEXT_BLKP(bp));
+    else if (prev_alloc && !next_alloc)    /* if the block on the left is allocated and the one on the left isn't, we move the footer*/
+    { /* Case 2 */                         /* of the currant block and then change the size in both the header and footer*/
+        removeFromList(NEXT_BLKP(bp));     /* the block on the right is removed from the free list since it is now merged with the currant*/
         size += GET_SIZE(HDRP(NEXT_BLKP(bp)));
         PUT(HDRP(bp), PACK(size, 0));
         PUT(FTRP(bp), PACK(size, 0));
     }
-    else if (!prev_alloc && next_alloc)
-    { /* Case 3 */
+    else if (!prev_alloc && next_alloc)   /* if the one on the right is allocated but the one on the left isn't, we move the header and then*/
+    { /* Case 3 */                        /* change the size, in this case the currant block is removed from the free list since it has the header */
         removeFromList(bp);
         size += GET_SIZE(HDRP(PREV_BLKP(bp)));
         PUT(FTRP(bp), PACK(size, 0));
@@ -475,9 +475,9 @@ static void *coalesce(void *bp)
         bp = PREV_BLKP(bp);
     }
     else
-    { /* Case 4 */
-        removeFromList(NEXT_BLKP(bp));
-        removeFromList(bp);
+    { /* Case 4 */                         /* in the last case both blocks ar unallocated, and we change the header of the previous block and the footer of the next*/
+        removeFromList(NEXT_BLKP(bp));     /* the middle part is garbage and is ignored*/
+        removeFromList(bp);                /* here we need to remove the currant and the next block from the free list since the previous block has the header */
         size += GET_SIZE(HDRP(PREV_BLKP(bp))) +
                 GET_SIZE(FTRP(NEXT_BLKP(bp)));
         PUT(HDRP(PREV_BLKP(bp)), PACK(size, 0));
