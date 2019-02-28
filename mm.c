@@ -63,8 +63,8 @@ team_t team = {
  */
 /* printf("%s\n, __func__"); seen in the malloc lecture from Freysteinn, lets us know which function we are currently checking */
 
-/*#define DEBUG */                  /* Comment this out when not debugging! */
-#ifdef DEBUG /* If and only if the DEBUG flag is set we go here */
+/*#define DEBUG */ /* Comment this out when not debugging! */
+#ifdef DEBUG       /* If and only if the DEBUG flag is set we go here */
 #define CHECKHEAP(verbose)    \
     printf("%s\n", __func__); \
     mm_checkheap(verbose);
@@ -442,7 +442,7 @@ static void *find_fit(size_t asize)
             }
         }
     }
-    return bestFit; /* if still NULL = no fit */ 
+    return bestFit; /* if still NULL = no fit */
                     /* if we got to this point then either a block with a higher remainder is used, or a block was not found :( */
 }
 
