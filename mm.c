@@ -63,13 +63,8 @@ team_t team = {
  */
 /* printf("%s\n, __func__"); seen in the malloc lecture from Freysteinn, lets us know which function we are currently checking */
 
-<<<<<<< HEAD
-//#define DEBUG                  /* Comment this out when not debugging! */
-#ifdef DEBUG /* If and only if the DEBUG flag is set we go here */
-=======
 /*#define DEBUG */ /* Comment this out when not debugging! */
 #ifdef DEBUG       /* If and only if the DEBUG flag is set we go here */
->>>>>>> d9131c873a6d9dc8f908e8250567f45a061054d0
 #define CHECKHEAP(verbose)    \
     printf("%s\n", __func__); \
     mm_checkheap(verbose);
@@ -258,11 +253,7 @@ void *mm_realloc(void *ptr, size_t size)
     /* So it would segment the blocks if thay were bigger then needed, but after many tries this gave us the best score */
 
     else if (!prev_alloc)
-<<<<<<< HEAD
-    { // if the block on the left is not allocated, we try to fit the new allocation in to them combined
-=======
     { /* if the block on the left is not allocated, we try to fit the new allocation in to them conbined */
->>>>>>> d9131c873a6d9dc8f908e8250567f45a061054d0
         newBlock = (copySize + GET_SIZE(HDRP(PREV_BLKP(ptr))));
         if (newBlock >= newSize)
         {
@@ -287,13 +278,8 @@ void *mm_realloc(void *ptr, size_t size)
         }
     }
     else if (!prev_alloc && !next_alloc)
-<<<<<<< HEAD
-    {                                                                                            // if both neighboring blocks are unallocated and the new block didn't fit in to just the left or right combined with the old block
-        newBlock = (copySize + GET_SIZE(FTRP(NEXT_BLKP(ptr))) + GET_SIZE(FTRP(PREV_BLKP(ptr)))); // then we check if it fits in all three conbined
-=======
     {                                                                                            /* if both neighboring blocks are unallocated and the new block didn't fit in to just the left or right conbined with the old block */
         newBlock = (copySize + GET_SIZE(FTRP(NEXT_BLKP(ptr))) + GET_SIZE(FTRP(PREV_BLKP(ptr)))); /* then we check if it fits in all three conbined*/
->>>>>>> d9131c873a6d9dc8f908e8250567f45a061054d0
         if (newBlock >= newSize)
         {
             newp = PREV_BLKP(ptr);
@@ -451,13 +437,8 @@ static void *find_fit(size_t asize)
             remainder = GET_SIZE(HDRP(bp)) - asize; /* the remainder of the block that was not asked for */
             bestFit = bp;
             if (remainder <= 3904)
-<<<<<<< HEAD
             {                   // when the remainder of the block is less then 3904 bits the block is considered goodenough
                 return bestFit; // the number 3904 is divisable by 8 and then 4 and was found through trial and error
-=======
-            {                   /* when the remainder of the block is less then 3600 bits the block is considered goodenough */
-                return bestFit; /* the number 3600 is a multiple of 8 and was found through trial and error */
->>>>>>> d9131c873a6d9dc8f908e8250567f45a061054d0
             }
         }
     }
@@ -474,15 +455,6 @@ static void *coalesce(void *bp)
     size_t next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(bp)));
     size_t size = GET_SIZE(HDRP(bp));
 
-<<<<<<< HEAD
-    if (prev_alloc && next_alloc)                   /* if both neighbor blocks are allocated, then we have nothing to coalesce*/
-    { /* Case 1 */
-        return bp;
-    }
-    else if (prev_alloc && !next_alloc)            /* if the block on the right is not allocated but the one on the left is, we merge with the one on the right*/
-    { /* Case 2 */
-        removeFromList(NEXT_BLKP(bp));		   /* this means we move the footer and then update the size of both footer and headr*/
-=======
     if (prev_alloc && next_alloc)           /* if both neighbor blocks are allocated we have nothing to coalesce */
     { /* Case 1 */                          /* and the pointer is returned unchaged*/
         return bp;
@@ -490,18 +462,12 @@ static void *coalesce(void *bp)
     else if (prev_alloc && !next_alloc)    /* if the block on the left is allocated and the one on the left isn't, we move the footer*/
     { /* Case 2 */                         /* of the currant block and then change the size in both the header and footer*/
         removeFromList(NEXT_BLKP(bp));     /* the block on the right is removed from the free list since it is now merged with the currant*/
->>>>>>> d9131c873a6d9dc8f908e8250567f45a061054d0
         size += GET_SIZE(HDRP(NEXT_BLKP(bp)));
         PUT(HDRP(bp), PACK(size, 0));
         PUT(FTRP(bp), PACK(size, 0));
     }
-<<<<<<< HEAD
-    else if (!prev_alloc && next_alloc)            /* if the one on the left is not allocated but the one on he right is, we do the same only we move the header and then change the sizes*/
-    { /* Case 3 */				   /* here we need to remove the currant block from the free list since the previous block has the header
-=======
     else if (!prev_alloc && next_alloc)   /* if the one on the right is allocated but the one on the left isn't, we move the header and then*/
     { /* Case 3 */                        /* change the size, in this case the currant block is removed from the free list since it has the header */
->>>>>>> d9131c873a6d9dc8f908e8250567f45a061054d0
         removeFromList(bp);
         size += GET_SIZE(HDRP(PREV_BLKP(bp)));
         PUT(FTRP(bp), PACK(size, 0));
@@ -509,15 +475,9 @@ static void *coalesce(void *bp)
         bp = PREV_BLKP(bp);
     }
     else
-<<<<<<< HEAD
-    { /* Case 4 */                               /* in the last case both blocks are unallocated and we need to change the header of the block on the right*/
-        removeFromList(NEXT_BLKP(bp));           /* and the footer of the block on the left, the middle part is then just garbage that we ignore*/
-        removeFromList(bp);			 /* we remove the current and the next block from the free list since the new header is on the previus block*/
-=======
     { /* Case 4 */                         /* in the last case both blocks ar unallocated, and we change the header of the previous block and the footer of the next*/
         removeFromList(NEXT_BLKP(bp));     /* the middle part is garbage and is ignored*/
         removeFromList(bp);                /* here we need to remove the currant and the next block from the free list since the previous block has the header */
->>>>>>> d9131c873a6d9dc8f908e8250567f45a061054d0
         size += GET_SIZE(HDRP(PREV_BLKP(bp))) +
                 GET_SIZE(FTRP(NEXT_BLKP(bp)));
         PUT(HDRP(PREV_BLKP(bp)), PACK(size, 0));
