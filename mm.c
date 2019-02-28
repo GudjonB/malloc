@@ -1,14 +1,29 @@
 /*
- * mm-naive.c - The fastest, least memory-efficient malloc package.
+ * Our solution uses an explisit doubly linked list for free blocks and best-fit find with a threshold 
+ * so the find fit function doesn't have to traverse the whole list if it already found a free block with minimum waste.
+ * the LISTHEAD pointer is the head of the free list and is located after the padding in the heap.
+ * we also modified the CHUNKSIZE wich is the minimum size added to the head when extended
+ * 
+ * * Each block has header and footer of the form:
+ * 
+ *      31                     3  2  1  0 
+ *      -----------------------------------
+ *     | s  s  s  s  ... s  s  s  0  0  a/f
+ *      ----------------------------------- 
+ * 
+ * where s are the meaningful size bits and a/f is set 
+ * iff the block is allocated. The list has the following form:
  *
- * In this naive approach, a block is allocated by simply incrementing
- * the brk pointer.  A block is pure payload. There are no headers or
- * footers.  Blocks are never coalesced or reused. Realloc is
- * implemented directly using mm_malloc and mm_free.
+ * begin                                                          end
+ * heap                                                           heap  
+ *  ------------------------------------------------------------------------------   
+ * |  pad   |   LISTHEAD | hdr(8:a) | ftr(8:a) | zero or more usr blks | hdr(8:a) |
+ *  ------------------------------------------------------------------------------
+ *          |   *prev    |       prologue      |                       | epilogue |
+ *          |   *next    |         block       |                       | block    |
  *
- * NOTE TO STUDENTS: Replace this header comment with your own header
- * comment that gives a high level description of your solution.
- *
+ * The allocated prologue and epilogue blocks are overhead that
+ * eliminate edge conditions during coalescing.
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -212,7 +227,7 @@ void mm_free(void *bp)
     PUT(HDRP(bp), PACK(size, 0));
     PUT(FTRP(bp), PACK(size, 0));
     addToList(bp);
-    coalesce(bp);
+    coalesce(bp); /* after each free we coalesce to merge with neighboring free blocks*/
 }
 
 /* $end mmfree */
@@ -383,7 +398,6 @@ static void *extend_heap(size_t words)
 
     /* Coalesce if the previous block was free */
     addToList(bp);
-    /*coalesce(bp); */
     return coalesce(bp);
 }
 /* $end mmextendheap */
